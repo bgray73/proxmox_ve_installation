@@ -1,0 +1,31 @@
+[Unit]
+Description=Proxmox automated-install answer server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=proxmox-answer
+Group=proxmox-answer
+WorkingDirectory=/opt/proxmox-deploy-kit
+EnvironmentFile=/opt/proxmox-deploy-kit/.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/proxmox-deploy-kit/server/answer_server.py --inventory /opt/proxmox-deploy-kit/inventory.json --listen 0.0.0.0 --port 8080 --tls-cert /opt/proxmox-deploy-kit/tls/answer-server.crt --tls-key /opt/proxmox-deploy-kit/tls/answer-server.key
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+ReadOnlyPaths=/opt/proxmox-deploy-kit
+
+[Install]
+WantedBy=multi-user.target

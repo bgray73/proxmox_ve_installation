@@ -1,0 +1,28 @@
+{
+  "groups": {
+    "group:infra-admins": ["CHANGE_ME@example.com"]
+  },
+  "tagOwners": {
+    "tag:infra-router": ["group:infra-admins"]
+  },
+  "grants": [
+    {
+      "src": ["group:infra-admins"],
+      "dst": ["10.10.10.0/24"],
+      "ip": ["tcp:22,443,5900-5901,623"]
+    },
+    {
+      "src": ["group:infra-admins"],
+      "dst": ["10.10.20.0/24"],
+      "ip": ["tcp:22,8006,8007"]
+    }
+  ],
+  "ssh": [
+    {
+      "action": "check",
+      "src": ["group:infra-admins"],
+      "dst": ["tag:infra-router"],
+      "users": ["autogroup:nonroot", "root"]
+    }
+  ]
+}

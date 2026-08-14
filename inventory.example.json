@@ -1,0 +1,75 @@
+{
+  "defaults": {
+    "keyboard": "en-us",
+    "country": "us",
+    "timezone": "America/New_York",
+    "mailto": "CHANGE_ME@example.com",
+    "dns": "192.0.2.53",
+    "gateway": "192.0.2.1",
+    "ssh_keys": [
+      "ssh-ed25519 AAAATEST CHANGE_ME"
+    ]
+  },
+  "hosts": [
+    {
+      "name": "pve01",
+      "product": "pve",
+      "model": "Dell PowerEdge R640",
+      "serial": "CHANGE_ME_DELL_SERVICE_TAG_1",
+      "fqdn": "pve01.example.com",
+      "management_mac": "02:00:00:00:00:01",
+      "cidr": "192.0.2.11/24",
+      "filesystem": "zfs",
+      "raid": "raid1",
+      "disks": ["sda", "sdb"]
+    },
+    {
+      "name": "pve02",
+      "product": "pve",
+      "model": "Dell PowerEdge R640",
+      "serial": "CHANGE_ME_DELL_SERVICE_TAG_2",
+      "fqdn": "pve02.example.com",
+      "management_mac": "02:00:00:00:00:02",
+      "cidr": "192.0.2.12/24",
+      "filesystem": "zfs",
+      "raid": "raid1",
+      "disks": ["sda", "sdb"]
+    },
+    {
+      "name": "pve03",
+      "product": "pve",
+      "model": "Dell PowerEdge R440",
+      "serial": "CHANGE_ME_DELL_SERVICE_TAG_3",
+      "fqdn": "pve03.example.com",
+      "management_mac": "02:00:00:00:00:03",
+      "cidr": "192.0.2.13/24",
+      "filesystem": "zfs",
+      "raid": "raid1",
+      "disks": ["sda", "sdb"]
+    },
+    {
+      "name": "pve04",
+      "product": "pve",
+      "model": "Dell PowerEdge R440",
+      "serial": "CHANGE_ME_DELL_SERVICE_TAG_4",
+      "fqdn": "pve04.example.com",
+      "management_mac": "02:00:00:00:00:04",
+      "cidr": "192.0.2.14/24",
+      "filesystem": "zfs",
+      "raid": "raid1",
+      "disks": ["sda", "sdb"]
+    },
+    {
+      "name": "pbs01",
+      "product": "pbs",
+      "model": "Supermicro CHANGE_ME_MODEL",
+      "serial": "CHANGE_ME_SUPERMICRO_SERIAL",
+      "fqdn": "pbs01.example.com",
+      "management_mac": "02:00:00:00:00:05",
+      "cidr": "192.0.2.20/24",
+      "filesystem": "zfs",
+      "raid": "raid1",
+      "disks": ["sda", "sdb"]
+    }
+  ]
+}

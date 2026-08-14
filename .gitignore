@@ -1,0 +1,10 @@
+.env
+inventory.json
+output/
+tls/
+*.iso
+*.img
+*.dmg
+__pycache__/
+*.pyc
+.DS_Store
