@@ -44,6 +44,7 @@ server/answer_server.py             Dependency-free answer server
 systemd/proxmox-answer-server.service Optional persistent Linux service
 network/                             Nexus 9K VLAN/port templates
 remote-access/                       Tailscale design, policy, installer
+docs/PBS-STORAGE.md                  PBS disk/controller design checklist
 inventory.example.json              Five-host sanitized template
 secrets.env.example                 Secret/environment template
 ```
@@ -166,6 +167,8 @@ The build script runs Proxmox's ISO inspection command after each build. The aut
    post-deploy/create_pbs_datastore.sh pbs-main /backup/pbs-main
    ```
 
+Before choosing the final disk layout, review `docs/PBS-STORAGE.md`. The preferred design is mirrored OS SSDs plus a separate redundant datastore, using either direct-disk ZFS or ext4/XFS on protected hardware RAID—not ZFS layered over hardware RAID.[2][7]
+
 PBS's official ISO installer can install to ext4, xfs, or ZFS and overwrites selected disks.[2]
 
 ## Post-deployment
@@ -239,3 +242,4 @@ This repository is public. Do not commit:
 [3] https://tailscale.com/kb/1019/subnets — Tailscale subnet routers
 [4] https://tailscale.com/kb/1337/acl-syntax — Tailscale access controls
 [5] https://docs.pangolin.net/about/how-pangolin-works — Pangolin architecture
+[7] https://pbs.proxmox.com/docs/sysadmin.html — Proxmox Backup Server Host Administration
