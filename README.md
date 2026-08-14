@@ -99,7 +99,7 @@ Generate a root password hash without storing the clear-text password:
 mkpasswd -m sha-512
 ```
 
-Paste the resulting hash into `.env` as `ROOT_PASSWORD_HASH`. Set a long random `ANSWER_TOKEN` in the required `name:secret` form, and set `ANSWER_URL` to the answer server address reachable from the installation VLAN.
+Paste the resulting hash into `.env` as `ROOT_PASSWORD_HASH`. Generate a high-entropy token with `printf 'installer:'; openssl rand -hex 24`, store it as `ANSWER_TOKEN`, and set `ANSWER_URL` to the answer server address reachable from the installation VLAN. Validation rejects the public placeholder, short secrets, and low-variety values.
 
 Validate:
 

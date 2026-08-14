@@ -9,7 +9,7 @@
     {
       "src": ["group:infra-admins"],
       "dst": ["10.10.10.0/24"],
-      "ip": ["tcp:22,443,5900-5901,623"]
+      "ip": ["tcp:22,443,5900-5901"]
     },
     {
       "src": ["group:infra-admins"],

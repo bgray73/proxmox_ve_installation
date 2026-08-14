@@ -24,8 +24,13 @@ def validate_auth_token(token: str) -> str:
     if not isinstance(token, str) or token.count(":") != 1:
         raise InventoryError("ANSWER_TOKEN must use the name:secret format")
     name, secret = token.split(":", 1)
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or len(secret) < 16 or "CHANGE_ME" in secret:
-        raise InventoryError("ANSWER_TOKEN requires a valid name and a secret of at least 16 characters")
+    if (
+        not re.fullmatch(r"[A-Za-z0-9_.-]+", name)
+        or len(secret) < 24
+        or len(set(secret)) < 10
+        or "CHANGE_ME" in secret
+    ):
+        raise InventoryError("ANSWER_TOKEN requires a valid name and a high-entropy secret of at least 24 characters")
     return token
 
 

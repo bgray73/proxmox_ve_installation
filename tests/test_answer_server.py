@@ -132,11 +132,12 @@ class AnswerServerTests(unittest.TestCase):
         self.assertIn('raid = "raid1"', answer)
 
     def test_auth_token_requires_nonempty_name_and_secret(self):
-        for bad in ("", "no-colon", ":secret", "name:", "name:short", "installer:CHANGE_ME_RANDOM_SECRET"):
+        for bad in ("", "no-colon", ":secret", "name:", "name:short", "installer:CHANGE_ME_RANDOM_SECRET", "installer:00000000000000000000000000000000"):
             with self.subTest(token=bad):
                 with self.assertRaises(InventoryError):
                     validate_auth_token(bad)
-        self.assertEqual(validate_auth_token("installer:0123456789abcdef"), "installer:0123456789abcdef")
+        strong = "installer:0123456789abcdefABCDEFxy"
+        self.assertEqual(validate_auth_token(strong), strong)
 
     def test_malformed_password_hash_is_rejected(self):
         for bad in ("$6$hash", "$6$salt$short", "plain-text"):
