@@ -18,13 +18,13 @@ Pangolin is a tunneled identity-aware reverse-proxy platform and is attractive f
 
 ## Deployment
 
-1. Put the router appliance on VLAN 20 with firewall routes to VLAN 10 and VLAN 20.
+1. Put the router appliance on infrastructure-services VLAN 40 with tightly filtered firewall routes to VLAN 10 (iDRAC), VLAN 20 (PVE management), and VLAN 30 (PBS management). Do not advertise Corosync or backup-data VLANs.
 2. Copy and customize `tailscale-policy.example.hujson` in the Tailscale admin console.
 3. Run the installer and complete its interactive Tailscale login (no auth key is stored in shell history):
 
    ```bash
    sudo remote-access/install_tailscale_router.sh \
-     '10.10.10.0/24,10.10.20.0/24'
+     '10.10.10.0/24,10.10.20.0/24,10.10.30.0/24'
    ```
 
 4. Approve the advertised routes.
@@ -32,6 +32,8 @@ Pangolin is a tunneled identity-aware reverse-proxy platform and is attractive f
 6. Keep local console/recovery credentials in an offline password manager.
 
 The sample grant permits only common management ports. Confirm actual iDRAC virtual-console requirements for your firmware; remove every port you do not need. Add Nexus SSH/HTTPS only if the switch management IP is inside an advertised management prefix and explicitly permitted.
+
+For tighter scope, replace the three `/24` routes with explicit `/32` routes for each iDRAC, PVE/PBS management address, and the Nexus management address. Keep at least one subnet router on a physical, independently powered Linux appliance so cluster failure does not remove the recovery path; add a second appliance later for resilience.[3]
 
 ## Sources
 

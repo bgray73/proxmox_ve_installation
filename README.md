@@ -71,7 +71,7 @@ secrets.env.example                 Secret/environment template
 
 ## Network design (Nexus 9K)
 
-Use separate VLANs for iDRAC/BMC, PVE/PBS management, PBS backup traffic, Corosync, and VM networks even though they share one Nexus. See `network/PORT-MAP.md` and `network/nexus9k.example.cfg`. Every sample interface has a descriptive label for fast operations. The Nexus template assumes an upstream firewall performs inter-VLAN routing and policy; do not paste it until interface numbers and existing configuration have been reviewed.
+Use separate VLANs for iDRAC/BMC, PVE management, PBS management, PBS backup traffic, Corosync, infrastructure services, and VM networks even though they share one Nexus. See `network/PORT-MAP.md` and `network/nexus9k.example.cfg`. Every sample interface has a descriptive label for fast operations. The Nexus template assumes an upstream firewall performs inter-VLAN routing and default-deny policy; do not paste it until interface numbers and existing configuration have been reviewed.
 
 One Nexus is a single failure domain, and iDRAC on that same switch is only logically out-of-band. A second switch, dual links, and a separate switch-management path are sensible later improvements.
 
