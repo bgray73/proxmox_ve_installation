@@ -33,7 +33,26 @@ Pangolin is a tunneled identity-aware reverse-proxy platform and is attractive f
 
 The sample grant permits only common management ports. Confirm actual iDRAC virtual-console requirements for your firmware; remove every port you do not need. Add Nexus SSH/HTTPS only if the switch management IP is inside an advertised management prefix and explicitly permitted.
 
-For tighter scope, replace the three `/24` routes with explicit `/32` routes for each iDRAC, PVE/PBS management address, and the Nexus management address. Keep at least one subnet router on a physical, independently powered Linux appliance so cluster failure does not remove the recovery path; add a second appliance later for resilience.[3]
+### Tighter scope with host routes
+
+For tighter scope, replace the three `/24` routes with explicit `/32` routes for each iDRAC, PVE/PBS management address, and the Nexus management address. Example:
+
+```bash
+sudo remote-access/install_tailscale_router.sh \
+  '10.10.10.11/32,10.10.10.12/32,10.10.20.11/32,10.10.20.12/32,10.10.30.20/32'
+```
+
+Keep at least one subnet router on a physical, independently powered Linux appliance so cluster failure does not remove the recovery path; add a second appliance later for resilience.[3]
+
+### Break-glass path
+
+Always retain a non-Tailscale recovery path:
+
+- Local keyboard/monitor or serial console on the subnet-router appliance
+- iDRAC/BMC virtual console credentials stored offline
+- Documented physical access procedure for the rack
+
+Tailscale is the day-to-day path, not the only path.
 
 ## Sources
 
