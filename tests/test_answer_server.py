@@ -36,6 +36,8 @@ class AnswerServerTests(unittest.TestCase):
                     "disks": ["sda", "sdb"],
                     "filesystem": "zfs",
                     "raid": "raid1",
+                    "notes": "primary node",
+                    "tags": ["pve", "lab"],
                 }
             ],
         }
@@ -53,15 +55,29 @@ class AnswerServerTests(unittest.TestCase):
         self.assertEqual(find_host(self.inventory, info)["name"], "pve01")
 
     def test_find_host_falls_back_to_mac(self):
-        host = find_host(self.inventory, {"product": "pve", "system": {"serial": "unknown"}, "mac_addresses": ["aa:bb:cc:dd:ee:01"]})
+        host = find_host(
+            self.inventory,
+            {"product": "pve", "system": {"serial": "unknown"}, "mac_addresses": ["aa:bb:cc:dd:ee:01"]},
+        )
         self.assertEqual(host["name"], "pve01")
 
     def test_find_host_rejects_serial_mac_conflict(self):
         other = dict(self.inventory["hosts"][0])
-        other.update(name="pve02", serial="DELL002", fqdn="pve02.lab.local", management_mac="AA:BB:CC:DD:EE:02", cidr="10.0.0.12/24")
+        other.update(
+            name="pve02",
+            serial="DELL002",
+            fqdn="pve02.lab.local",
+            management_mac="AA:BB:CC:DD:EE:02",
+            cidr="10.0.0.12/24",
+            notes="secondary",
+            tags=["pve"],
+        )
         self.inventory["hosts"].append(other)
         with self.assertRaises(InventoryError):
-            find_host(self.inventory, {"product": "pve", "system": {"serial": "DELL001"}, "mac_addresses": ["aa:bb:cc:dd:ee:02"]})
+            find_host(
+                self.inventory,
+                {"product": "pve", "system": {"serial": "DELL001"}, "mac_addresses": ["aa:bb:cc:dd:ee:02"]},
+            )
 
     def test_product_mismatch_is_rejected(self):
         with self.assertRaises(InventoryError):
@@ -80,7 +96,7 @@ class AnswerServerTests(unittest.TestCase):
 
     def test_answer_enables_iso_first_boot_hook(self):
         answer = build_answer(self.inventory, self.inventory["hosts"][0], TEST_HASH)
-        self.assertIn('[first-boot]', answer)
+        self.assertIn("[first-boot]", answer)
         self.assertIn('source = "from-iso"', answer)
         self.assertIn('ordering = "fully-up"', answer)
 
@@ -131,8 +147,30 @@ class AnswerServerTests(unittest.TestCase):
         self.assertIn("[disk-setup.btrfs]", answer)
         self.assertIn('raid = "raid1"', answer)
 
+    def test_optional_notes_and_tags_are_accepted(self):
+        data = load_inventory_data(self.inventory)
+        self.assertEqual(data["hosts"][0]["notes"], "primary node")
+        self.assertEqual(data["hosts"][0]["tags"], ["pve", "lab"])
+
+    def test_malformed_notes_or_tags_are_rejected(self):
+        self.inventory["hosts"][0]["notes"] = 123
+        with self.assertRaises(InventoryError):
+            load_inventory_data(self.inventory)
+        self.inventory["hosts"][0]["notes"] = "ok"
+        self.inventory["hosts"][0]["tags"] = "not-a-list"
+        with self.assertRaises(InventoryError):
+            load_inventory_data(self.inventory)
+
     def test_auth_token_requires_nonempty_name_and_secret(self):
-        for bad in ("", "no-colon", ":secret", "name:", "name:short", "installer:CHANGE_ME_RANDOM_SECRET", "installer:00000000000000000000000000000000"):
+        for bad in (
+            "",
+            "no-colon",
+            ":secret",
+            "name:",
+            "name:short",
+            "installer:CHANGE_ME_RANDOM_SECRET",
+            "installer:00000000000000000000000000000000",
+        ):
             with self.subTest(token=bad):
                 with self.assertRaises(InventoryError):
                     validate_auth_token(bad)
