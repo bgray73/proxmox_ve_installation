@@ -21,7 +21,9 @@
       "cidr": "192.0.2.11/24",
       "filesystem": "zfs",
       "raid": "raid1",
-      "disks": ["sda", "sdb"]
+      "disks": ["sda", "sdb"],
+      "notes": "Primary R640 — verify HBA/JBOD mode before ZFS install",
+      "tags": ["pve", "r640"]
     },
     {
       "name": "pve02",
@@ -33,7 +35,8 @@
       "cidr": "192.0.2.12/24",
       "filesystem": "zfs",
       "raid": "raid1",
-      "disks": ["sda", "sdb"]
+      "disks": ["sda", "sdb"],
+      "tags": ["pve", "r640"]
     },
     {
       "name": "pve03",
@@ -45,7 +48,8 @@
       "cidr": "192.0.2.13/24",
       "filesystem": "zfs",
       "raid": "raid1",
-      "disks": ["sda", "sdb"]
+      "disks": ["sda", "sdb"],
+      "tags": ["pve", "r440"]
     },
     {
       "name": "pve04",
@@ -57,7 +61,8 @@
       "cidr": "192.0.2.14/24",
       "filesystem": "zfs",
       "raid": "raid1",
-      "disks": ["sda", "sdb"]
+      "disks": ["sda", "sdb"],
+      "tags": ["pve", "r440"]
     },
     {
       "name": "pbs01",
@@ -69,7 +74,9 @@
       "cidr": "192.0.2.20/24",
       "filesystem": "zfs",
       "raid": "raid1",
-      "disks": ["sda", "sdb"]
+      "disks": ["sda", "sdb"],
+      "notes": "OS mirror only; create backup datastore after install",
+      "tags": ["pbs"]
     }
   ]
 }
