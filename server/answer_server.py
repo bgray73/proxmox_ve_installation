@@ -30,7 +30,9 @@ def validate_auth_token(token: str) -> str:
         or len(set(secret)) < 10
         or "CHANGE_ME" in secret
     ):
-        raise InventoryError("ANSWER_TOKEN requires a valid name and a high-entropy secret of at least 24 characters")
+        raise InventoryError(
+            "ANSWER_TOKEN requires a valid name and a high-entropy secret of at least 24 characters"
+        )
     return token
 
 
@@ -54,7 +56,9 @@ def _validate_storage(host: dict[str, Any]) -> None:
         raise InventoryError(f"{name}: disks must not contain duplicates")
     device_pattern = re.compile(r"(?:sd|vd|xvd)[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+")
     if not all(device_pattern.fullmatch(d) for d in disks):
-        raise InventoryError(f"{name}: invalid disk name; use installer-visible names such as sda or nvme0n1")
+        raise InventoryError(
+            f"{name}: invalid disk name; use installer-visible names such as sda or nvme0n1"
+        )
 
     filesystem = host["filesystem"]
     if filesystem not in ("ext4", "xfs", "zfs", "btrfs"):
@@ -63,7 +67,9 @@ def _validate_storage(host: dict[str, Any]) -> None:
         raise InventoryError(f"{name}: btrfs is supported only for PVE")
     if filesystem in ("ext4", "xfs"):
         if len(disks) != 1 or host.get("raid") is not None:
-            raise InventoryError(f"{name}: {filesystem} requires exactly one installer disk and no raid key")
+            raise InventoryError(
+                f"{name}: {filesystem} requires exactly one installer disk and no raid key"
+            )
         lvm = host.get("lvm")
         if lvm is not None:
             allowed = {"hdsize", "swapsize", "maxroot", "maxvz", "minfree"}
@@ -85,6 +91,9 @@ def _validate_storage(host: dict[str, Any]) -> None:
     if count < minimum or (raid == "raid10" and count % 2):
         raise InventoryError(f"{name}: raid level {raid} is incompatible with {count} disks")
 
+    # Soft guidance: ZFS should be on HBA/JBOD, not hardware RAID.
+    # We cannot detect controller mode from inventory, so document only.
+
 
 def load_inventory(path: str | Path) -> dict[str, Any]:
     try:
@@ -103,6 +112,13 @@ def load_inventory(path: str | Path) -> dict[str, Any]:
             _required(host, key)
         if host["product"] not in ("pve", "pbs"):
             raise InventoryError(f"{host['name']}: product must be pve or pbs")
+        # Optional human fields — validate type only when present.
+        if "notes" in host and not isinstance(host["notes"], str):
+            raise InventoryError(f"{host['name']}: notes must be a string when present")
+        if "tags" in host:
+            tags = host["tags"]
+            if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+                raise InventoryError(f"{host['name']}: tags must be a list of strings when present")
         flattened = json.dumps(host)
         bad = next((marker for marker in PLACEHOLDERS if marker in flattened), None)
         if bad:
@@ -136,21 +152,33 @@ def find_host(inventory: dict[str, Any], system_info: dict[str, Any]) -> dict[st
         system = system_info.get("system", {})
     serial = str(system.get("serial", "")).strip().lower()
     macs = {str(m).lower() for m in system_info.get("mac_addresses", [])}
-    macs.update(str(n.get("mac", "")).lower() for n in system_info.get("network_interfaces", []) if isinstance(n, dict))
+    macs.update(
+        str(n.get("mac", "")).lower()
+        for n in system_info.get("network_interfaces", [])
+        if isinstance(n, dict)
+    )
     macs.discard("")
     candidates = [h for h in inventory["hosts"] if str(h["product"]).lower() == product]
-    serial_host = next((h for h in candidates if serial and str(h["serial"]).strip().lower() == serial), None)
-    mac_host = next((h for h in candidates if str(h["management_mac"]).lower() in macs), None)
+    serial_host = next(
+        (h for h in candidates if serial and str(h["serial"]).strip().lower() == serial), None
+    )
+    mac_host = next(
+        (h for h in candidates if str(h["management_mac"]).lower() in macs), None
+    )
     if serial_host and mac_host and serial_host is not mac_host:
         raise InventoryError("serial and management MAC identify different inventory hosts")
     if serial_host or mac_host:
         return serial_host or mac_host
-    raise InventoryError(f"no {product or 'unknown-product'} host matches serial={serial!r} or supplied MACs")
+    raise InventoryError(
+        f"no {product or 'unknown-product'} host matches serial={serial!r} or supplied MACs"
+    )
 
 
 def build_answer(inventory: dict[str, Any], host: dict[str, Any], password_hash: str) -> str:
     if not re.fullmatch(r"\$6\$[./A-Za-z0-9]{1,16}\$[./A-Za-z0-9]{86}", password_hash):
-        raise InventoryError("ROOT_PASSWORD_HASH must be a complete SHA-512 crypt hash from mkpasswd -m sha-512")
+        raise InventoryError(
+            "ROOT_PASSWORD_HASH must be a complete SHA-512 crypt hash from mkpasswd -m sha-512"
+        )
     d = inventory["defaults"]
     keys = ", ".join(_toml_string(k) for k in d["ssh_keys"])
     disks = ", ".join(_toml_string(x) for x in host["disks"])

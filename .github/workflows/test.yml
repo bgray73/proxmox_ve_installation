@@ -7,12 +7,26 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
-      - run: python -m unittest discover -s tests -v
-      - run: bash -n scripts/*.sh first-boot/*.sh post-deploy/*.sh remote-access/*.sh
-      - run: python -m compileall -q server scripts tests
-      - run: python -m json.tool inventory.example.json >/dev/null
+          python-version: ${{ matrix.python-version }}
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Shell syntax check
+        run: bash -n scripts/*.sh first-boot/*.sh post-deploy/*.sh remote-access/*.sh
+      - name: Compile Python sources
+        run: python -m compileall -q server scripts tests
+      - name: Validate example inventory JSON
+        run: python -m json.tool inventory.example.json >/dev/null
+      - name: Example inventory must fail closed
+        run: |
+          if python scripts/validate_inventory.py inventory.example.json; then
+            echo "example inventory should not validate until customized" >&2
+            exit 1
+          fi

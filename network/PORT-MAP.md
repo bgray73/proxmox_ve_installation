@@ -31,3 +31,14 @@ VLAN 20 is native on PVE trunks and VLAN 30 is native on the PBS trunk because t
 An optional second Corosync ring should use another NIC and preferably another physical switch. Two Corosync VLANs on this one Nexus provide traffic separation, not physical redundancy, so VLAN 22 is intentionally not preconfigured.
 
 Apply in a maintenance window: paste VLANs first, then one interface at a time; verify with `show interface status`, `show vlan brief`, `show interface trunk`, and save only after connectivity tests.
+
+## Phase 2 HA improvements (recommended later)
+
+The current design prioritizes a clean, automatable first install. Once the cluster is stable, plan these upgrades in order:
+
+1. **Dedicated OOB switch** — Move iDRAC/BMC (VLAN 10) and switch management off the production Nexus onto a small managed switch with independent power.
+2. **Second production switch** — Dual-home PVE and PBS data links; move Corosync ring B onto the second switch and a second NIC.
+3. **Dual Tailscale subnet routers** — Two independently powered appliances on VLAN 40 so a single router failure does not remove remote management.
+4. **Firewall policy hardening** — Explicit allow-lists for VLAN 31 (PVE↔PBS backup only) and deny inter-VLAN traffic by default on the upstream firewall.
+
+Until those exist, treat the single Nexus and single management path as accepted risk for a homelab, not a production multi-site design.

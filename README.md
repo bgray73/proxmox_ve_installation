@@ -1,10 +1,46 @@
 # Proxmox VE + Backup Server automated installation
 
+[![test](https://github.com/bgray73/proxmox_ve_installation/actions/workflows/test.yml/badge.svg)](https://github.com/bgray73/proxmox_ve_installation/actions/workflows/test.yml)
+
 Reusable, PXE-free deployment kit for:
 
 - 2 × Dell PowerEdge R640 running Proxmox VE
 - 2 × Dell PowerEdge R440 running Proxmox VE
 - 1 × Supermicro server running Proxmox Backup Server (PBS)
+
+**Validated against:** Proxmox VE / PBS automated installation tooling as of August 2026 (re-validate after major Proxmox ISO or `proxmox-auto-install-assistant` upgrades).
+
+## Quick Start
+
+```bash
+# 1. Prerequisites on an x86_64 Debian/Proxmox build host
+apt update && apt install -y proxmox-auto-install-assistant xorriso whois
+
+# 2. Configure site inventory and secrets (never commit these)
+cp inventory.example.json inventory.json
+cp secrets.env.example .env && chmod 600 .env
+# Edit inventory.json and .env — replace every CHANGE_ME
+
+# 3. TLS cert for the answer server (use the IP/DNS reachable from install VLAN)
+make cert HOST=10.10.20.50
+# Paste printed TLS_* and ANSWER_CERT_FINGERPRINT into .env
+
+# 4. Validate and test
+make validate
+make test
+
+# 5. Start answer server (another terminal)
+make server
+# Health: curl --cacert tls/answer-server.crt https://10.10.20.50:8080/healthz
+
+# 6. Build reusable automated ISOs
+make isos PVE=/path/to/proxmox-ve.iso PBS=/path/to/proxmox-backup-server.iso
+
+# 7. Boot first PVE node via iDRAC Virtual Media, confirm answer match,
+#    then boot remaining nodes in parallel. See Deploy section below.
+```
+
+Common operator targets: `make help`.
 
 ## Recommended design
 
@@ -31,20 +67,23 @@ The example inventory deliberately contains `CHANGE_ME` and documentation-only a
 ## Repository contents
 
 ```text
-.github/workflows/test.yml          GitHub Actions tests
-first-boot/pve-first-boot.sh        Safe PVE first-boot validation
-first-boot/pbs-first-boot.sh        Safe PBS first-boot validation
-post-deploy/create_cluster.sh       Guarded cluster creation helper
+.github/workflows/test.yml          GitHub Actions tests (Python 3.11/3.12)
+Makefile                            Operator convenience targets
+first-boot/pve-first-boot.sh        PVE first-boot validation + observability
+first-boot/pbs-first-boot.sh        PBS first-boot validation + observability
+post-deploy/create_cluster.sh       Guarded cluster creation (supports --dry-run)
+post-deploy/join_cluster.sh         Guarded cluster join for secondary nodes
 post-deploy/create_pbs_datastore.sh Guarded PBS datastore helper
 scripts/build_isos.sh               Builds and inspects both automated ISOs
 scripts/generate_tls_certificate.sh Creates pinned HTTPS certificate
+scripts/rotate_answer_token.sh      Regenerates ANSWER_TOKEN in .env
 scripts/run_answer_server.sh        Starts the host-aware answer service
 scripts/validate_inventory.py       Fails closed on bad/placeholder inventory
 server/answer_server.py             Dependency-free answer server
 systemd/proxmox-answer-server.service Optional persistent Linux service
-network/                             Nexus 9K VLAN/port templates
-remote-access/                       Tailscale design, policy, installer
-docs/PBS-STORAGE.md                  PBS disk/controller design checklist
+network/                            Nexus 9K VLAN/port templates + HA notes
+remote-access/                      Tailscale design, policy, installer
+docs/PBS-STORAGE.md                 PBS disk/controller design checklist
 inventory.example.json              Five-host sanitized template
 secrets.env.example                 Secret/environment template
 ```
@@ -60,7 +99,7 @@ secrets.env.example                 Secret/environment template
    ```
 
 3. A temporary DHCP lease must be available on the installation network so the booted installer can reach the answer server. The installed host then uses the static address from the inventory.
-4. The answer server's TCP port (default `8080`) must be reachable by all five servers.
+4. The answer server's TCP port (default `8080`) must be reachable by all five servers **from the installation VLAN only**. Do not expose it beyond that path.
 5. Collect each server's:
    - service tag/system serial
    - MAC of the intended management NIC
@@ -73,7 +112,7 @@ secrets.env.example                 Secret/environment template
 
 Use separate VLANs for iDRAC/BMC, PVE management, PBS management, PBS backup traffic, Corosync, infrastructure services, and VM networks even though they share one Nexus. See `network/PORT-MAP.md` and `network/nexus9k.example.cfg`. Every sample interface has a descriptive label for fast operations. The Nexus template assumes an upstream firewall performs inter-VLAN routing and default-deny policy; do not paste it until interface numbers and existing configuration have been reviewed.
 
-One Nexus is a single failure domain, and iDRAC on that same switch is only logically out-of-band. A second switch, dual links, and a separate switch-management path are sensible later improvements.
+One Nexus is a single failure domain, and iDRAC on that same switch is only logically out-of-band. A second switch, dual links, and a separate switch-management path are documented as Phase 2 HA improvements in `network/PORT-MAP.md`.
 
 ## Configure
 
@@ -86,12 +125,19 @@ chmod 600 .env
 Create a pinned TLS certificate using the answer server's installation-VLAN IP or DNS name:
 
 ```bash
-scripts/generate_tls_certificate.sh 10.10.20.50 tls
+make cert HOST=10.10.20.50
+# or: scripts/generate_tls_certificate.sh 10.10.20.50 tls
 ```
 
 Copy the printed certificate paths and SHA-256 fingerprint into `.env`. Use an `https://` `ANSWER_URL`; the build refuses plaintext HTTP.
 
-Edit `inventory.json`. Replace every placeholder and documentation address. For a public repository, keep `inventory.json` untracked; it is ignored by default. If this repository is later made private and you intentionally want to store site inventory, remove that ignore entry—but never commit `.env`.
+Edit `inventory.json`. Replace every placeholder and documentation address. Optional per-host fields:
+
+- `notes` (string) — free-form operator notes
+- `tags` (list of strings) — simple labels for filtering/docs
+- `dns` / `gateway` — per-host overrides of defaults
+
+For a public repository, keep `inventory.json` untracked; it is ignored by default. If this repository is later made private and you intentionally want to store site inventory, remove that ignore entry—but never commit `.env`.
 
 Generate a root password hash without storing the clear-text password:
 
@@ -104,8 +150,8 @@ Paste the resulting hash into `.env` as `ROOT_PASSWORD_HASH`. Generate a high-en
 Validate:
 
 ```bash
-python3 scripts/validate_inventory.py inventory.json
-python3 -m unittest discover -s tests -v
+make validate
+make test
 ```
 
 ## Run the answer server
@@ -113,7 +159,8 @@ python3 -m unittest discover -s tests -v
 On a Mac/Linux workstation for a one-time deployment:
 
 ```bash
-scripts/run_answer_server.sh --listen 0.0.0.0 --port 8080
+make server
+# or: scripts/run_answer_server.sh --listen 0.0.0.0 --port 8080
 curl --cacert tls/answer-server.crt https://10.10.20.50:8080/healthz
 ```
 
@@ -124,14 +171,15 @@ sudo scripts/install_answer_service.sh
 curl --cacert tls/answer-server.crt https://10.10.20.50:8080/healthz
 ```
 
+Restrict access so only the installation VLAN can reach the answer port.
+
 ## Build the two reusable ISOs
 
 Run on the build machine:
 
 ```bash
-scripts/build_isos.sh \
-  /path/to/proxmox-ve.iso \
-  /path/to/proxmox-backup-server.iso
+make isos PVE=/path/to/proxmox-ve.iso PBS=/path/to/proxmox-backup-server.iso
+# or: scripts/build_isos.sh /path/to/proxmox-ve.iso /path/to/proxmox-backup-server.iso
 ```
 
 Outputs:
@@ -143,6 +191,19 @@ output/SHA256SUMS
 ```
 
 The build script runs Proxmox's ISO inspection command after each build. The authorization token is embedded in the ISOs in plain text by the Proxmox tooling, so protect generated ISOs and rotate the token after deployment.[1]
+
+### Token rotation
+
+After a successful deployment (or if the token may have leaked):
+
+```bash
+make rotate-token
+# Rebuild ISOs so the new token is embedded
+make isos PVE=... PBS=...
+# Restart the answer server so it loads the new token from .env
+```
+
+`scripts/rotate_answer_token.sh` writes a new high-entropy `ANSWER_TOKEN` into `.env` and prints the rebuild checklist.
 
 ## Deploy
 
@@ -164,6 +225,7 @@ The build script runs Proxmox's ISO inspection command after each build. The aut
 4. Create the PBS datastore only after verifying the mount:
 
    ```bash
+   post-deploy/create_pbs_datastore.sh --dry-run pbs-main /backup/pbs-main
    post-deploy/create_pbs_datastore.sh pbs-main /backup/pbs-main
    ```
 
@@ -180,13 +242,16 @@ Ensure all nodes resolve each other's management FQDNs, time synchronization is 
 On the intended first node:
 
 ```bash
+post-deploy/create_cluster.sh --dry-run homelab
 post-deploy/create_cluster.sh homelab
 ```
 
 On each remaining node, one at a time:
 
 ```bash
-pvecm add <management-IP-of-first-node>
+post-deploy/join_cluster.sh --dry-run <management-IP-of-first-node>
+post-deploy/join_cluster.sh <management-IP-of-first-node>
+# or: pvecm add <management-IP-of-first-node>
 ```
 
 Do not create VMs or local configuration on nodes before joining; cluster joining replaces the joining node's cluster configuration.
@@ -203,7 +268,7 @@ In the PVE GUI, add **Datacenter → Storage → Add → Proxmox Backup Server**
 
 ## Secure remote management
 
-Use a dedicated Tailscale subnet-router appliance to reach the iDRAC and PVE/PBS management VLANs without Internet-facing port forwards. Tailscale's subnet-router model supports devices that cannot run the client, and grants restrict identities, destination CIDRs, and ports.[3][4] The full comparison, sample policy, and installer are in `remote-access/README.md`.
+Use a dedicated Tailscale subnet-router appliance to reach the iDRAC and PVE/PBS management VLANs without Internet-facing port forwards. Tailscale's subnet-router model supports devices that cannot run the client, and grants restrict identities, destination CIDRs, and ports.[3][4] The full comparison, sample policy, host-route tightening, and break-glass guidance are in `remote-access/README.md`.
 
 Pangolin is useful as an identity-aware reverse proxy for selected web applications, but it is not the primary recommendation for this environment because appliance work also requires SSH, Redfish/IPMI, virtual-console traffic, and subnet reachability.[5]
 
