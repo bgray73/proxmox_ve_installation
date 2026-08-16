@@ -1,0 +1,29 @@
+services:
+  labops-a2a:
+    build: .
+    image: labops-a2a-agent:latest
+    container_name: labops-a2a-agent
+    ports:
+      - "9999:9999"
+    volumes:
+      - labops-a2a-data:/data
+    environment:
+      A2A_HOST: "0.0.0.0"
+      A2A_PORT: "9999"
+      A2A_DB: "/data/labops_a2a.db"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9999/.well-known/agent-card.json', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  labops-a2a-data:

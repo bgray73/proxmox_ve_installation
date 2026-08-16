@@ -1,0 +1,37 @@
+# Python noise
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Local state / secrets
+data/
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+
+# VCS / IDE
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# Not needed in image build context
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+test_*.py
+client.py
