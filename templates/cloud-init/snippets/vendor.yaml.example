@@ -1,0 +1,14 @@
+#cloud-config
+# Example vendor data for Proxmox --cicustom "vendor=local:snippets/vendor.yaml"
+# Copy to a snippets-enabled storage path, e.g. /var/lib/vz/snippets/vendor.yaml
+#
+# This file is OPTIONAL. It installs a baseline useful for LabOps / Ansible.
+
+package_update: true
+packages:
+  - qemu-guest-agent
+  - curl
+  - ca-certificates
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent

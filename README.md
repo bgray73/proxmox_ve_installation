@@ -86,7 +86,14 @@ remote-access/                      Tailscale design, policy, installer
 docs/PBS-STORAGE.md                 PBS disk/controller design checklist
 inventory.example.json              Five-host sanitized template
 secrets.env.example                 Secret/environment template
+templates/                          Optional post-install guest templates (cloud-init)
+agents/                             Optional LabOps demo agents (A2A)
 ```
+
+Optional post-install material (not required for ISO install):
+
+- [`templates/cloud-init/`](templates/cloud-init/) — Ubuntu cloud-init golden template script + notes
+- [`agents/labops-a2a/`](agents/labops-a2a/) — demo Agent2Agent status agent
 
 ## Prerequisites
 
@@ -265,6 +272,17 @@ In the PBS GUI:
 3. Copy the PBS certificate fingerprint.
 
 In the PVE GUI, add **Datacenter → Storage → Add → Proxmox Backup Server** using the PBS address, datastore, token identity/secret, and fingerprint. Keep the API token secret in a password manager or GitHub Actions secret, never in this repository.
+
+### Optional: guest cloud-init templates
+
+After the cluster is up, you can build cloneable Ubuntu cloud-init templates on a PVE node:
+
+```bash
+cd templates/cloud-init
+sudo ./create-ubuntu-cloudinit-template.sh
+```
+
+See [`templates/cloud-init/README.md`](templates/cloud-init/README.md).
 
 ## Secure remote management
 
