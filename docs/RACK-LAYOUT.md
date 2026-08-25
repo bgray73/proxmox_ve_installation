@@ -166,13 +166,65 @@ Direct server 10Gb/40Gb connections should normally run directly to the Nexus.
 Keep power and network bundles separated where practical.
 
 ```text
-REAR VIEW
+REAR VIEW — Dell 42U
 
-Left vertical path:   AC power / PDU cabling
-Right vertical path:  Ethernet / DAC / management cabling
+ LEFT REAR / POWER                                RIGHT REAR / NETWORK
+
+ PDU A (vertical)                                 PDU B or network vertical manager
+      |                                                      |
+      |                                                      |
+U42   |  Patch panel rear punch/keystone cabling  -----------+--> structured Cat6/Cat6A
+U41   |  Catalyst 2960-X rear power               -----------+--> iDRAC / IPMI / 1Gb mgmt
+U40   |  Nexus 9372TX rear power                  -----------+--> 10Gb RJ45 server links
+U39   |  Brush panel                              <-----------+-- 40Gb DACs pass front-to-rear
+U38   |  Horizontal cable manager                 -----------+--> cable dressing
+      |                                                      |
+U37   |  CCNA lab power                           -----------+--> CCNA lab Ethernet
+U36   |  CCNA lab power                           -----------+--> CCNA lab Ethernet
+U35   |  CCNA lab power                           -----------+--> CCNA lab Ethernet
+U34   |  CCNA lab power                           -----------+--> CCNA lab Ethernet
+      |                                                      |
+U33   |  Reserved / cable-management space                   |
+      |                                                      |
+U32   +--> R640 #1 PSU A/B                         <----------+-- 40G DAC / 10G / 1G / iDRAC
+U31   +--> R640 #2 PSU A/B                         <----------+-- 40G DAC / 10G / 1G / iDRAC
+U30   +--> R440 PSU A/B                            <----------+-- 40G DAC / 10G / 1G / iDRAC
+U29   +--> Supermicro PSU A/B                      <----------+-- 40G DAC / 10G / IPMI
+U28   +--> Supermicro PSU A/B                      <----------+-- rear service loop
+      |                                                      |
+U27   |  Expansion space                                     |
+ ...  |                                                      |
+U07   |                                                      |
+      |                                                      |
+U06   +--> CyberPower UPS A                                  |
+U05   +--> CyberPower UPS A                                  |
+U04   +--> Future UPS B                                      |
+U03   +--> Future UPS B                                      |
+U02   |                                                      |
+U01   |                                                      |
+
+BOTTOM
 ```
 
-If two PDUs are installed, mount one along each rear side of the cabinet where possible.
+### Rear-side routing rules
+
+- **Left side:** AC power cords and PDU feeds.
+- **Right side:** QSFP+ DAC, 10Gb RJ45, 1Gb management, iDRAC/IPMI, and other Ethernet.
+- Route the four 2 m QSFP+ DACs from the Nexus front ports through the U39 brush panel, then down the right rear vertical path to the server NICs.
+- Keep enough service loop at each server so a server can be slid out on rails without pulling on the NIC or DAC connector.
+- Use Velcro, not tight zip ties, on DAC and network bundles.
+- Do not bundle AC power and Ethernet/DAC together for long vertical runs.
+
+### Suggested rear PDU arrangement
+
+If two PDUs are installed, mount one on each rear side of the cabinet where possible.
+
+```text
+Server PSU A -> Rear-left PDU A -> UPS A -> Circuit A
+Server PSU B -> Rear-right PDU B -> UPS B -> Circuit B
+```
+
+If only one UPS/PDU is installed initially, keep the physical A/B routing pattern anyway so a second power path can be added later without recabling the rack.
 
 ## Power notes
 
