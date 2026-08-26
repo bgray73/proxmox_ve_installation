@@ -1,44 +1,85 @@
-# Nexus 9K port map
+# Network port maps
 
-Review and replace interface numbers before applying `nexus9k.example.cfg`.
+Review and replace interface numbers before applying the example configs.
+
+## Cisco Nexus N9K-C9372TX — high-speed data underlay
+
+The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS backup, and Proxmox SDN/VXLAN transport. iDRAC/IPMI and 1Gb management have moved to the Catalyst 2960-X OOB switch.
 
 | Port | Description | Mode | VLANs |
 |---|---|---|---|
-| E1/1–4 | PVE01–04 iDRAC | access | 10 |
-| E1/5 | PBS01 BMC | access | 10 |
-| E1/11–14 | PVE01–04 data | trunk | 20,21,31,100; native 20 |
-| E1/15 | PBS01 data | trunk | 30,31; native 30 |
-| E1/46–47 | Tailscale router 1–2 | access | 40 |
-| E1/48 | firewall/router uplink | trunk | 10,20,21,30,31,40,100,998 |
+| E1/11 | PVE01 R640 primary data | trunk | 20,21,31,100; native 20 |
+| E1/12 | PVE02 R640 primary data | trunk | 20,21,31,100; native 20 |
+| E1/13 | PVE03 R440 primary data | trunk | 20,21,31,100; native 20 |
+| E1/15 | PBS01 Supermicro primary data | trunk | 30,31; native 30 |
+| E1/21 | PVE01 10Gb failover | trunk | 20,21,31,100; native 20 |
+| E1/22 | PVE02 10Gb failover | trunk | 20,21,31,100; native 20 |
+| E1/23 | PVE03 10Gb failover | trunk | 20,21,31,100; native 20 |
+| E1/48 | firewall/router uplink | trunk | 20,21,30,31,40,100,998 |
+
+> The exact Nexus interfaces used by the four 40Gb QSFP+ server links must be verified on the installed N9K-C9372TX before deployment. The table above is a logical placeholder map, not a claim that E1/11–15 are QSFP ports.
+
+## Cisco Catalyst 2960-X — OOB and 1Gb management
+
+| Port | Description | Mode | VLAN |
+|---|---|---|---:|
+| Gi1/0/1 | PVE01 R640 iDRAC | access | 10 |
+| Gi1/0/2 | PVE02 R640 iDRAC | access | 10 |
+| Gi1/0/3 | PVE03 R440 iDRAC | access | 10 |
+| Gi1/0/4 | PBS01 Supermicro IPMI | access | 10 |
+| Gi1/0/5 | PVE01 1Gb management | access | 20 |
+| Gi1/0/6 | PVE02 1Gb management | access | 20 |
+| Gi1/0/7 | PVE03 1Gb management | access | 20 |
+| Gi1/0/8 | PBS01 1Gb management, optional | access | 30 |
+| Gi1/0/9 | UPS management | access | 40 |
+| Gi1/0/10 | PDU management | access | 40 |
+| Gi1/0/11 | Tailscale subnet router 1 | access | 40 |
+| Gi1/0/12 | Tailscale subnet router 2, optional | access | 40 |
+| Gi1/0/48 | firewall/router OOB uplink | trunk | 10,20,30,40,998 |
+
+The 2960-X remains Layer 2 in this design. Its management SVI can live in VLAN 10 with `ip default-gateway` pointing at the firewall/router. Inter-VLAN routes for VLANs 10/20/30/40 belong on the firewall/router, not on the OOB switch.
 
 ## VLAN intent
 
-| VLAN | Purpose | Suggested CIDR | Routed? |
+| VLAN | Purpose | Suggested CIDR | Routing policy |
 |---:|---|---|---|
-| 10 | iDRAC/BMC and restricted switch management | 10.10.10.0/24 | only through firewall/ACL |
-| 20 | PVE management | 10.10.20.0/24 | restricted |
-| 21 | Corosync ring A | 10.10.21.0/24 | no gateway |
-| 30 | PBS management | 10.10.30.0/24 | restricted |
-| 31 | PVE-to-PBS backup data | 10.10.31.0/24 | PVE↔PBS only |
+| 10 | iDRAC/BMC and restricted switch management | 10.10.10.0/24 | firewall/ACL only |
+| 20 | PVE management | 10.10.20.0/24 | restricted management |
+| 21 | Corosync ring A | 10.10.21.0/24 | no gateway; never through Tailscale |
+| 30 | PBS management | 10.10.30.0/24 | restricted management |
+| 31 | PVE-to-PBS backup/restore over 40Gb | 10.10.31.0/24 | PVE↔PBS only; never through Tailscale |
 | 40 | DNS/NTP/monitoring/automation/Tailscale routers | 10.10.40.0/24 | service-specific policy |
-| 100 | VM networks/trunk | site-defined | firewall-defined |
+| 100 | Proxmox SDN / VXLAN transport underlay | site-defined | underlay transport; overlay VNets above it |
 | 998 | unused/native blackhole | none | no |
 
-The single Nexus is a failure domain and the iDRAC network is logically isolated, not true physical out-of-band. Prioritize moving iDRAC/BMC and switch management to a modest dedicated managed switch when practical. A second production switch and dual-homed server links are the later high-availability improvement. Keep Nexus `mgmt0` on a separate management path if possible.
+## Remote-management routing
 
-VLAN 20 is native on PVE trunks and VLAN 30 is native on the PBS trunk because the automated installer creates the initial management interface untagged. Backup, Corosync, and VM VLANs remain tagged. If management later moves to tagged subinterfaces, change both host networking and switch native VLANs in the same maintenance window.
+The intended path is:
 
-An optional second Corosync ring should use another NIC and preferably another physical switch. Two Corosync VLANs on this one Nexus provide traffic separation, not physical redundancy, so VLAN 22 is intentionally not preconfigured.
+```text
+Remote device
+   |
+Tailscale
+   |
+Subnet router on VLAN 40
+   |
+Firewall / routed policy
+   +--> VLAN 10  iDRAC / IPMI / switch management
+   +--> VLAN 20  PVE management
+   +--> VLAN 30  PBS management
+```
 
-Apply in a maintenance window: paste VLANs first, then one interface at a time; verify with `show interface status`, `show vlan brief`, `show interface trunk`, and save only after connectivity tests.
+Advertise only the management prefixes needed by Tailscale. Do not advertise VLAN 21 Corosync or VLAN 31 PBS backup. Use firewall policy to allow only required management destinations and ports.
 
-## Phase 2 HA improvements (recommended later)
+## Proxmox SDN model
 
-The current design prioritizes a clean, automatable first install. Once the cluster is stable, plan these upgrades in order:
+Use the physical VLANs above as the underlay. Keep management, Corosync, and PBS backup on normal VLANs. Use VLAN 100 as the transport underlay for Proxmox SDN/VXLAN VNets such as DEV, TEST, LAB, or DMZ.
 
-1. **Dedicated OOB switch** — Move iDRAC/BMC (VLAN 10) and switch management off the production Nexus onto a small managed switch with independent power.
-2. **Second production switch** — Dual-home PVE and PBS data links; move Corosync ring B onto the second switch and a second NIC.
-3. **Dual Tailscale subnet routers** — Two independently powered appliances on VLAN 40 so a single router failure does not remove remote management.
-4. **Firewall policy hardening** — Explicit allow-lists for VLAN 31 (PVE↔PBS backup only) and deny inter-VLAN traffic by default on the upstream firewall.
+## HA improvements
 
-Until those exist, treat the single Nexus and single management path as accepted risk for a homelab, not a production multi-site design.
+1. Add a second production switch and dual-home the 40Gb/10Gb data plane.
+2. Add a second independently powered Tailscale subnet router.
+3. If adding Corosync ring B, use a second NIC and preferably a second physical switch.
+4. Keep explicit allow-lists for VLAN 31 and default-deny inter-VLAN firewall policy.
+
+See `network/nexus9k.example.cfg` and `network/catalyst2960x-oob.example.cfg` for configuration examples.
