@@ -17,7 +17,7 @@ Physical rack plan for the Proxmox home lab.
 
 ## Recommended rack elevation
 
-The servers are intentionally mounted high enough that 2 m (6.6 ft) QSFP+ DAC cables can reach from the front-facing Nexus QSFP+ ports, through the brush panel, down the rear cable-management path, and into the server NICs without being stretched.
+The servers are intentionally mounted high enough for clean 40Gb cable routing from the front-facing Nexus QSFP+ ports, through the brush panel, down the rear cable-management path, and into the server NICs. The current plan uses 5 m (16.4 ft) Cisco QSFP-H40G-CU5M passive DAC cables, providing ample reach and service-loop flexibility throughout the 42U cabinet.
 
 ```text
 FRONT VIEW — Dell 42U
@@ -83,10 +83,10 @@ Use one 40Gb port initially on each server and leave the second NIC port availab
 ```text
 Nexus 9372TX QSFP+ 40G ports
 
-40G-1  -> 2 m QSFP+ DAC -> R640 #1 MCX314A-BCCT Port 1
-40G-2  -> 2 m QSFP+ DAC -> R640 #2 MCX314A-BCCT Port 1
-40G-3  -> 2 m QSFP+ DAC -> R440    MCX314A-BCCT Port 1
-40G-4  -> 2 m QSFP+ DAC -> Supermicro PBS MCX314A-BCCT Port 1
+40G-1  -> 5 m Cisco QSFP-H40G-CU5M DAC -> R640 #1 MCX314A-BCCT Port 1
+40G-2  -> 5 m Cisco QSFP-H40G-CU5M DAC -> R640 #2 MCX314A-BCCT Port 1
+40G-3  -> 5 m Cisco QSFP-H40G-CU5M DAC -> R440    MCX314A-BCCT Port 1
+40G-4  -> 5 m Cisco QSFP-H40G-CU5M DAC -> Supermicro PBS MCX314A-BCCT Port 1
 40G-5  -> Spare
 40G-6  -> Spare
 ```
@@ -108,7 +108,7 @@ rear vertical cable-management path
         +--> Supermicro PBS
 ```
 
-Use 2 m passive QSFP+ DAC cables. Avoid tight bends and do not leave the cables under tension.
+Use 5 m Cisco QSFP-H40G-CU5M passive QSFP+ DAC cables. The extra length provides flexibility for service loops and future rack moves. Route excess length in large, gentle loops along the rear cable-management path; avoid tight coils, sharp bends, or tension on the QSFP+ connectors.
 
 ## 10Gb failover path
 
@@ -210,7 +210,8 @@ BOTTOM
 
 - **Left side:** AC power cords and PDU feeds.
 - **Right side:** QSFP+ DAC, 10Gb RJ45, 1Gb management, iDRAC/IPMI, and other Ethernet.
-- Route the four 2 m QSFP+ DACs from the Nexus front ports through the U39 brush panel, then down the right rear vertical path to the server NICs.
+- Route the four 5 m Cisco QSFP-H40G-CU5M DACs from the Nexus front ports through the U39 brush panel, then down the right rear vertical path to the server NICs.
+- Use the extra DAC length as a broad service loop along the rear vertical manager rather than a tight coil behind a server.
 - Keep enough service loop at each server so a server can be slid out on rails without pulling on the NIC or DAC connector.
 - Use Velcro, not tight zip ties, on DAC and network bundles.
 - Do not bundle AC power and Ethernet/DAC together for long vertical runs.
@@ -253,10 +254,10 @@ Do not assume two wall outlets are separate circuits; verify them at the breaker
 4. Install Nexus, Catalyst, brush panel, cable manager, and patch panel.
 5. Install CCNA lab equipment.
 6. Route power first, keeping it on its designated side.
-7. Route QSFP+ DACs through the brush panel and rear cable path.
+7. Route the 5 m Cisco QSFP-H40G-CU5M DACs through the brush panel and rear cable path, dressing excess length in gentle service loops.
 8. Route 10Gb, 1Gb, iDRAC, and IPMI cables.
 9. Label both ends of every cable.
-10. Verify DAC reach and rail movement before final Velcro dressing.
+10. Verify DAC reach, bend radius, service loops, and rail movement before final Velcro dressing.
 
 ## Suggested cable labels
 
