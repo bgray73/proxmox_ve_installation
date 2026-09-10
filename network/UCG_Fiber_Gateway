@@ -1,0 +1,64 @@
+Ubiquiti Cloud Gateway Fiber (UCG-Fiber) Configuration
+Companion configuration to the Catalyst 2960-X (OOB) and Nexus 9000 (core) switches. The UCG Fiber terminates trunks from both switches and performs all inter-VLAN routing and firewall policy — neither switch does L3 routing.
+
+The UCG Fiber does not use an IOS-style CLI config file. Everything below is configured through the UniFi Network application (GUI/API), with an optional config.gateway.json override for anything not exposed in the UI.
+
+Important: VLAN 40 renumbering
+On the switches, trunk VLAN IDs are only locally significant per link, so VLAN 40 could safely mean different things on the 2960-X (INFRA_TAILSCALE) and the Nexus (INFRA_SERVICES). On the gateway this breaks: UniFi's "Networks" are defined once globally, keyed by VLAN ID, and applied to ports/SSIDs. Since the UCG Fiber terminates both switches, the Nexus's VLAN 40 was renumbered to VLAN 41 (INFRA_SERVICES) to avoid the collision. Apply that renumbering to the Nexus switch config before wiring it to this gateway.
+
+Networks (Settings → Networks)
+VLAN	Name	Subnet	Gateway IP	DHCP	Internet	Notes
+10	OOB_IDRAC_BMC	10.10.10.0/24	10.10.10.1	Off (static iDRACs)	Off	matches 2960-X ip default-gateway 10.10.10.1
+20	PVE_MGMT	10.10.20.0/24	10.10.20.1	On or static	Off	separate instance per switch — not L2-shared
+21	COROSYNC_A	10.10.21.0/24	10.10.21.1	Off	Off	keep minimally routed — see firewall rules
+30	PBS_MGMT	10.10.30.0/24	10.10.30.1	On or static	Off	
+31	PBS_BACKUP_40G	10.10.31.0/24	10.10.31.1	Off	Off	
+40	INFRA_TAILSCALE	10.10.40.0/24	10.10.40.1	Off	On	UPS/PDU/Tailscale subnet routers
+41	INFRA_SERVICES	10.10.41.0/24	10.10.41.1	On	as needed	renumbered from Nexus's VLAN 40
+50	IOT_DEVICES	10.10.50.0/24	10.10.50.1	On	On	
+60	APPLE_TV	10.10.60.0/24	10.10.60.1	On	On	
+70	IPHONES	10.10.70.0/24	10.10.70.1	On	On	
+80	WIFI_AP_MGMT	10.10.80.0/24	10.10.80.1	Off/static	Off	admin-only reachability
+100	SDN_VXLAN_TRANSPORT	—	none	Off	Off	pure L2 underlay; no SVI unless Proxmox SDN needs L3 here
+998	BLACKHOLE_NATIVE	—	none	Off	Off	don't create a Network at all — leave undefined so untagged/mis-tagged traffic has nowhere to go
+Port Profiles (Settings → Networks → Port Profiles)
+Apply these to whichever physical ports are cabled to each switch. Verify actual port labels against your specific UCG-Fiber hardware/firmware revision before assigning — SFP+/SFP28/RJ45 layout varies.
+
+Profile: TRUNK-TO-2960X-OOB
+
+Native Network: BLACKHOLE_NATIVE (or "None")
+Tagged VLANs: 10, 20, 30, 40, 50, 60, 70, 80
+Profile: TRUNK-TO-NEXUS-CORE
+
+Native Network: BLACKHOLE_NATIVE (or "None")
+Tagged VLANs: 20, 21, 30, 31, 41, 100
+Traffic/Firewall Rules (Settings → Security → Traffic Rules / Firewall Rules)
+Implements the isolation intent documented in both switch configs:
+
+Block VLAN 21 (Corosync) → Internet, and VLAN 21 → all other VLANs except where cluster nodes genuinely need reachability (usually none beyond itself).
+Block VLAN 31 (PBS Backup) → Internet; restrict to PBS↔PVE traffic only.
+Block Tailscale-sourced traffic → VLAN 21 and VLAN 31 explicitly (enforces "do not route Corosync/PBS backup through Tailscale" — don't rely on omission).
+VLAN 50 (IoT) → deny to VLANs 10, 20, 30, 80; allow IoT → Internet only.
+VLAN 80 (AP mgmt) → allow only from an admin/management source; deny from IoT/Apple TV/iPhones.
+Default posture: inter-VLAN deny, with explicit allows layered on top.
+mDNS/AirPlay (Settings → Networks → VLAN 60/70 → Multicast DNS)
+Enable Multicast DNS (mDNS) on both the Apple TV (60) and iPhones (70) networks. This lets iPhones on VLAN 70 discover the Apple TV on VLAN 60 via UniFi's built-in mDNS reflector, without merging the two VLANs.
+
+Advanced: config.gateway.json
+Anything above not exposed in the UI (fine-grained per-VLAN routing policy, static routes) can be layered in via the JSON config override under UniFi OS. Hold off writing this until the GUI configuration above is in place and tested — firmware-schema details vary by UniFi OS version, and a bad override can lock you out of the gateway.
+
+Verification checklist
+not done
+All Networks created with correct VLAN ID/subnet/gateway
+not done
+Port profiles applied to the correct physical ports for each switch trunk
+not done
+Nexus VLAN 40 renumbered to 41 before connecting
+not done
+Firewall rules in place for Corosync/PBS-backup/Tailscale isolation
+not done
+IoT → mgmt VLAN deny rules confirmed with a test client
+not done
+mDNS enabled on Apple TV and iPhone networks; AirPlay discovery tested
+not done
+AP management VLAN (80) reachable only from admin host
