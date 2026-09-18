@@ -13,7 +13,10 @@ Physical rack plan for the Proxmox home lab.
 - 24-port keystone patch panel
 - 1U brush pass-through panel
 - CCNA lab equipment
-- CyberPower OR1500LCDRTXL2U UPS
+- CyberPower OR1500LCDRTXL2U UPS — compute path (Circuit A)
+- UniFi PDU Pro 2U — rear mounted, compute distribution (Circuit A)
+- UniFi UPS 2U — network path (Circuit B)
+- UniFi UCG Fiber — gateway; exact rack mounting position to verify
 
 ## Recommended rack elevation
 
@@ -64,15 +67,15 @@ U07  Reserved
 
 U06  CyberPower OR1500LCDRTXL2U UPS
 U05  CyberPower OR1500LCDRTXL2U UPS
-U04  Reserved / future UPS
-U03  Reserved / future UPS
+U04  UniFi UPS 2U — network path (planned)
+U03  UniFi UPS 2U — network path (planned)
 U02  Reserved
 U01  Reserved
 
 BOTTOM
 ```
 
-> Keep heavy equipment such as UPS units at the bottom of the cabinet. Final UPS U positions can be adjusted to match rail requirements and any second UPS added later.
+> Planned elevation; verify actual installed U positions, shelf capacity, rail clearance and airflow on site. Keep both UPS units at the bottom. UniFi PDU Pro 2U occupies rear U27–U28, not front rack space. UCG Fiber placement remains to be confirmed.
 
 ## 40Gb server network
 
@@ -170,7 +173,7 @@ REAR VIEW — Dell 42U
 
  LEFT REAR / POWER                                RIGHT REAR / NETWORK
 
- PDU A (vertical)                                 PDU B or network vertical manager
+ UniFi PDU Pro 2U (rear U27–U28)                 Network vertical manager
       |                                                      |
       |                                                      |
 U42   |  Patch panel rear punch/keystone cabling  -----------+--> structured Cat6/Cat6A
@@ -198,8 +201,8 @@ U07   |                                                      |
       |                                                      |
 U06   +--> CyberPower UPS A                                  |
 U05   +--> CyberPower UPS A                                  |
-U04   +--> Future UPS B                                      |
-U03   +--> Future UPS B                                      |
+U04   +--> UniFi UPS 2U                                      |
+U03   +--> UniFi UPS 2U                                      |
 U02   |                                                      |
 U01   |                                                      |
 
@@ -216,40 +219,25 @@ BOTTOM
 - Use Velcro, not tight zip ties, on DAC and network bundles.
 - Do not bundle AC power and Ethernet/DAC together for long vertical runs.
 
-### Suggested rear PDU arrangement
+### Power distribution plan
 
-If two PDUs are installed, mount one on each rear side of the cabinet where possible.
+| Circuit | UPS | Downstream equipment | Status |
+|---|---|---|---|
+| A (15 A) | CyberPower OR1500LCDRTXL2U at front U05–U06 | Rear UniFi PDU Pro 2U at U27–U28 → three Dell PVE nodes and Supermicro PBS | Planned; verify UPS rating and actual load |
+| B (15 A) | UniFi UPS 2U at front U03–U04 | Nexus 9372TX, Catalyst 2960-X, UCG Fiber and network accessories | Planned; verify available outlets and actual load |
 
-```text
-Server PSU A -> Rear-left PDU A -> UPS A -> Circuit A
-Server PSU B -> Rear-right PDU B -> UPS B -> Circuit B
-```
+The PDU Pro is on the compute UPS only. The network UPS powers network equipment directly or through a compatible distribution method determined at installation. Do not assume dual PSU redundancy merely because a server has two power supplies: record each PSU's actual outlet and circuit after wiring. Verify the two 15 A circuits are independent at the panel, and measure peak and steady load on each UPS.
 
-If only one UPS/PDU is installed initially, keep the physical A/B routing pattern anyway so a second power path can be added later without recabling the rack.
+Keep power runs on the left rear and data runs on the right rear. Confirm that rear U27–U28 mounting does not interfere with server rails, power connections, rear doors or service access. The ONT and Verizon G3100 are on the first floor and are not part of the basement rack elevation.
 
-## Power notes
+## Scanopy cross-reference
 
-Current UPS:
-
-- CyberPower OR1500LCDRTXL2U
-- 1500 VA / 1125 W
-- 120 V / 15 A input
-
-The current design should start with two separate 15 A branch circuits and two UPSs if available. Measure actual server load before deciding whether a third circuit/UPS is necessary.
-
-For dual-PSU equipment, an eventual A/B layout can be used when each power path has sufficient capacity:
-
-```text
-PSU A -> PDU A -> UPS A -> Circuit A
-PSU B -> PDU B -> UPS B -> Circuit B
-```
-
-Do not assume two wall outlets are separate circuits; verify them at the breaker panel.
+This page records planned U positions, rear placement and power. [Scanopy deployment and discovery](SCANOPY.md) records observed network devices and links after a scan. Compare discovered Nexus and Catalyst connections with [the port map](../network/PORT-MAP.md); update this physical plan only after checking the rack in person. Scanopy L2 discovery cannot infer U positions, PDU power cords or UPS circuits.
 
 ## Physical installation order
 
 1. Install UPS equipment at the bottom.
-2. Install rear PDUs and vertical cable management.
+2. Mount the rear PDU Pro at U27–U28 and install vertical cable management; verify rail and door clearance.
 3. Install the three Dell servers and Supermicro.
 4. Install Nexus, Catalyst, brush panel, cable manager, and patch panel.
 5. Install CCNA lab equipment.
