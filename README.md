@@ -84,6 +84,8 @@ systemd/proxmox-answer-server.service Optional persistent Linux service
 network/                            Nexus 9K VLAN/port templates + HA notes
 remote-access/                      Tailscale design, policy, installer
 docs/PBS-STORAGE.md                 PBS disk/controller design checklist
+docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
+docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
 inventory.example.json              Five-host sanitized template
 secrets.env.example                 Secret/environment template
 templates/                          Optional post-install guest templates (cloud-init)
@@ -283,6 +285,10 @@ sudo ./create-ubuntu-cloudinit-template.sh
 ```
 
 See [`templates/cloud-init/README.md`](templates/cloud-init/README.md).
+
+## Rack documentation and Scanopy
+
+The [Dell 42U rack plan](docs/RACK-LAYOUT.md) records planned front/rear positions and circuit assignments. The [Scanopy runbook](docs/SCANOPY.md) describes running Scanopy in a Debian VM on Proxmox and comparing its discovered links with the planned port map. Neither the scan nor the physical U positions have been verified by this repository.
 
 ## Secure remote management
 
