@@ -26,7 +26,7 @@ From a Linux workstation that can reach the iDRAC VLAN:
 # chmod +x <file>.BIN && sudo ./<file>.BIN
 
 # 1. Create the iDRAC list (keep this file private; it is NOT in the repo):
-printf 'pve01 10.10.10.11\npve02 10.10.10.12\npve03 10.10.10.13\npve04 10.10.10.14\n' > /root/idracs.txt
+printf 'pve01 10.10.10.11\npve02 10.10.10.12\npve03 10.10.10.13\n' > /root/idracs.txt
 chmod 600 /root/idracs.txt
 
 # 2. Preview what each node needs:
@@ -38,7 +38,7 @@ scripts/update_firmware.sh dell --via idrac --idrac-list /root/idracs.txt --mode
 ```
 
 `--reboot` lets staged updates (BIOS, iDRAC) take effect immediately. Without
-it, reboot each node through iDRAC after staging. Do all four Dells before
+it, reboot each node through iDRAC after staging. Do all three Dells before
 generating ISOs or deploying.
 
 Alternative with no DSU: iDRAC Lifecycle Controller → Firmware Update from

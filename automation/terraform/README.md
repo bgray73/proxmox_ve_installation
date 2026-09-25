@@ -11,7 +11,7 @@ provider. Compatible with both Terraform and OpenTofu.
 | adguard       | LXC  | pve01 | 200  | 10.10.30.10   | AdGuard Home (DNS + ad blocking)     |
 | proxy         | LXC  | pve02 | 201  | 10.10.30.11   | Nginx Proxy Manager (TLS front door) |
 | uptime        | LXC  | pve03 | 202  | 10.10.30.12   | Uptime Kuma (monitoring + alerts)    |
-| semaphore     | LXC  | pve04 | 203  | 10.10.30.13   | Semaphore (Ansible UI)               |
+| semaphore     | LXC  | pve02 | 203  | 10.10.30.13   | Semaphore (Ansible UI)               |
 | ntfy          | LXC  | pve01 | 204  | 10.10.30.14   | ntfy (push notifications)            |
 | observability | VM   | pve02 | 300  | 10.10.30.20   | Grafana + Prometheus + Loki          |
 | docker        | VM   | pve03 | 301  | 10.10.30.21   | Docker workload host                 |
@@ -71,7 +71,7 @@ marked with `Terraform:` comment prefixes instead.
 
 ### ha.tf — high availability
 
-HA group `infra` spanning `pve_nodes` (default `pve01`–`pve04`), plus one HA
+HA group `infra` spanning `pve_nodes` (default `pve01`–`pve03`), plus one HA
 resource per managed guest (`ct:<vmid>` / `vm:<vmid>`), desired state
 `started`.
 

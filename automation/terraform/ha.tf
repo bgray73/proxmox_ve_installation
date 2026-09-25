@@ -31,7 +31,7 @@ variable "manage_ha" {
 variable "pve_nodes" {
   description = "PVE cluster node names forming the infra HA group."
   type        = list(string)
-  default     = ["pve01", "pve02", "pve03", "pve04"]
+  default     = ["pve01", "pve02", "pve03"]
 }
 
 resource "proxmox_virtual_environment_hagroup" "infra" {

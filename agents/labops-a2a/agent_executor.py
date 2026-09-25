@@ -24,7 +24,6 @@ class LabOpsStatusAgent:
         "pve01": {"role": "proxmox-ve", "status": "online", "latency_ms": 2.1},
         "pve02": {"role": "proxmox-ve", "status": "online", "latency_ms": 2.4},
         "pve03": {"role": "proxmox-ve", "status": "degraded", "latency_ms": 48.0},
-        "pve04": {"role": "proxmox-ve", "status": "online", "latency_ms": 1.9},
         "pbs01": {"role": "proxmox-backup", "status": "online", "latency_ms": 3.2},
     }
 

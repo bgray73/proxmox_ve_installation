@@ -141,7 +141,7 @@ variable "containers" {
       startup_order = 3
     }
     semaphore = {
-      node          = "pve04"
+      node          = "pve02"
       vmid          = 203
       hostname      = "semaphore"
       ipv4          = "10.10.30.13/24"

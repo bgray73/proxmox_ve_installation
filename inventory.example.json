@@ -52,19 +52,6 @@
       "tags": ["pve", "r440"]
     },
     {
-      "name": "pve04",
-      "product": "pve",
-      "model": "Dell PowerEdge R440",
-      "serial": "CHANGE_ME_DELL_SERVICE_TAG_4",
-      "fqdn": "pve04.example.com",
-      "management_mac": "02:00:00:00:00:04",
-      "cidr": "192.0.2.14/24",
-      "filesystem": "zfs",
-      "raid": "raid1",
-      "disks": ["sda", "sdb"],
-      "tags": ["pve", "r440"]
-    },
-    {
       "name": "pbs01",
       "product": "pbs",
       "model": "Supermicro CHANGE_ME_MODEL",

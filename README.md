@@ -44,14 +44,14 @@ Common operator targets: `make help`.
 
 ## Recommended design
 
-Use **one common automated PVE ISO** for all four Dell servers and **one automated PBS ISO** for the Supermicro. Mount the same PVE ISO through each Dell iDRAC's Virtual Media and boot all four servers in parallel. The installer obtains a host-specific TOML answer from the included HTTP answer server, matched by Dell service tag first and management MAC second.
+Use **one common automated PVE ISO** for all three Dell servers and **one automated PBS ISO** for the Supermicro. Mount the same PVE ISO through each Dell iDRAC's Virtual Media and boot all three servers in parallel. The installer obtains a host-specific TOML answer from the included HTTP answer server, matched by Dell service tag first and management MAC second.
 
 This is not PXE: each server boots an ISO through iDRAC or USB. HTTP is used only to retrieve its small answer file. Proxmox officially supports fetching an answer over HTTP(S), sends machine-identifying information in the POST, automatically selects the `Automated Installation` entry after ten seconds, and supports an ISO-integrated first-boot executable.[1]
 
 ### Why this is the easiest repeatable option
 
-- One PVE image, not four per-host images.
-- Four PVE installations can run simultaneously.
+- One PVE image, not three per-host images.
+- Three PVE installations can run simultaneously.
 - No TFTP, DHCP options, PXE firmware, or boot-server maintenance.
 - Rebuilds are inventory changes plus the same ISO and server.
 - Secrets and generated ISOs stay outside Git.
@@ -226,14 +226,14 @@ Update iDRAC/BIOS/NIC/storage-controller firmware on all five machines — see
 from a workstation on the management network. Supermicro: BMC web update +
 BIOS via UEFI shell (or SUM once an OS exists).
 
-### Four Dell PVE nodes
+### Three Dell PVE nodes
 
 1. Verify the answer service health endpoint.
 2. In each iDRAC, mount `output/proxmox-ve-auto.iso` as Virtual Media.
 3. Set a one-time boot from Virtual CD/DVD/ISO.
 4. Start one server first and watch the answer-server log for the correct host match.
 5. Verify it boots with its expected FQDN/IP and that `/root/proxmox-deployment/first-boot-complete` exists.
-6. If correct, boot the remaining three in parallel.
+6. If correct, boot the remaining two in parallel.
 7. Unmount Virtual Media when complete.
 
 ### Supermicro PBS
@@ -324,7 +324,7 @@ Pangolin is useful as an identity-aware reverse proxy for selected web applicati
 | Deploy/test Tailscale management access | 30–60 min | 15–30 min |
 | **Total hands-on/elapsed estimate** | **about 4–7 hours** | **about 2–4 hours** |
 
-Actual installation time depends mainly on iDRAC virtual-media speed, storage initialization, firmware, and network throughput. Installing the four PVE nodes in parallel avoids roughly three additional interactive install cycles.
+Actual installation time depends mainly on iDRAC virtual-media speed, storage initialization, firmware, and network throughput. Installing the three PVE nodes in parallel avoids roughly two additional interactive install cycles.
 
 ## GitHub and licensing
 
