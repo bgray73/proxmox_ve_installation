@@ -5,15 +5,48 @@
 - Chassis: **Supermicro 6028R-E1CR24N**, 2U, 24× 3.5" LFF hot-swap bays on a
   SAS3 expander backplane, plus 2× rear 2.5" flex bays. Board: X10DRi.
 - Controller: **Broadcom 3108 HW RAID mezzanine (AOC-S3108M-H8L)** — this is
-  a hardware RAID card, not an HBA. For ZFS it **must** be set to JBOD
-  per-drive passthrough (via the 3108 BIOS utility or StorCLI); never build
-  RAID virtual disks under ZFS. Alternative: replace it with an LSI
-  9300-8i (or equivalent) HBA in IT mode.
-- Suggested layout: PBS OS as a mirror on two small SSDs in the rear flex
-  bays; datastore as ZFS across the 24 LFF bays — **2× 12-disk RAIDZ2**
-  (resilvers faster and degrades more gracefully than one 24-wide vdev).
-  Consider a mirrored enterprise-SSD special vdev for metadata (redundant —
-  losing it loses the pool, and it cannot be removed later).
+  a hardware RAID card, not an HBA. Decision (2026-09-25): **replace it
+  with an LSI 9300-8i in IT mode** (or the Supermicro-branded
+  AOC-S3008L-L8i — same SAS3008 chip). The 3108 comes out entirely; one
+  SFF-8643→SFF-8643 cable connects the HBA to the single SAS3 expander
+  backplane and fans out to all 24 bays. Card needs a low-profile bracket
+  for the 2U chassis. Never put ZFS on a hardware RAID virtual disk.
+- Disks on hand (2026-09-25): **12× 512GB SSD, 3× 4TB HDD, 11× 1TB HDD.**
+
+## Finalized topology (2026-09-25)
+
+All 26 bays are spoken for. 2.5" SSDs in the front LFF bays need
+2.5"→3.5" adapter trays; the rear flex bays are 2.5" native.
+
+| Bays | Disks | Use |
+|------|-------|-----|
+| Rear flex ×2 | 2× 512GB SSD | PBS OS mirror |
+| Front ×2 | 2× 512GB SSD | ZFS **special vdev** mirror (metadata) |
+| Front ×8 | 8× 512GB SSD | Pool `fast`: 4× mirrored pairs striped, ≈2TB usable |
+| Front ×11 | 11× 1TB HDD | Pool `tank` vdev 1: RAIDZ2, 9TB usable |
+| Front ×3 | 3× 4TB HDD | Pool `tank` vdev 2: 3-way mirror, 4TB usable |
+
+- **Pool `tank`** (bulk backups, one PBS datastore, ≈13TB usable): mixed
+  vdevs are legal in ZFS — an 11-wide RAIDZ2 of 1TB disks plus a 3-way
+  mirror of 4TB disks. Never mix disk sizes *within* a vdev (capacity
+  clamps to the smallest disk); separate vdevs per size avoids that.
+  The mirrored SSD special vdev is attached to this pool — PBS
+  garbage-collection, prune, and verify are metadata-heavy, and this is
+  the single biggest performance win. The special vdev **must stay
+  mirrored**: losing it loses the pool, and it cannot be removed later.
+  (RAIDZ1 on the 3× 4TB would give 8TB usable instead of 4TB, at only
+  single-disk redundancy — not taken.)
+- **Pool `fast`** (second PBS datastore, ≈2TB usable): striped mirrors on
+  SSD for the most critical VMs — faster backup, verify, and restore.
+  Assign per-guest in the PVE backup jobs.
+- **Not used:** SLOG (PBS does almost no sync writes) and L2ARC (write-heavy
+  workload — spend the budget on RAM for ARC instead). PBS chunks are 4MB,
+  so they stay on the HDDs; only metadata and small blocks land on the
+  special vdev. No `special_small_blocks` tuning needed.
+- **Spares:** no SSD or HDD spares on hand after this layout. Buy at least
+  one spare 512GB SSD and keep the 3108's old cables labeled; HDD spares
+  can follow when the 1TB disks age out (that pool is the natural
+  upgrade target: replace 1TB disks with larger ones later).
 
 ## Recommended physical layout
 
