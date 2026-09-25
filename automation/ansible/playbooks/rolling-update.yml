@@ -1,0 +1,84 @@
+---
+# Rolling update for the Proxmox VE cluster: one node at a time, with a quorum
+# gate before and after each node.
+#
+#   python3 scripts/gen_inventory.py > inventory.json
+#   ansible-playbook -i inventory.json playbooks/rolling-update.yml
+#
+# IMPORTANT: migrate or HA-enable guests before running. This playbook updates
+# and reboots each node in turn; guests that cannot move will go down with
+# their host. Uses only ansible.builtin modules.
+- name: Rolling Proxmox VE update
+  hosts: proxmox_ve
+  become: true
+  serial: 1
+
+  vars:
+    reboot_timeout_seconds: 600
+
+  pre_tasks:
+    - name: Warn about guest placement
+      ansible.builtin.debug:
+        msg: "About to update {{ inventory_hostname }}. Ensure its guests are migrated or HA-managed."
+
+    - name: Gate on cluster quorum
+      ansible.builtin.command:
+        cmd: pvecm status
+      changed_when: false
+      register: quorum_before
+      failed_when: "'Quorate: Yes' not in quorum_before.stdout"
+
+  tasks:
+    - name: Refresh apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: "Apply distribution upgrade (Proxmox-safe: dist, not full)"
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Check whether a reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot when required
+      ansible.builtin.reboot:
+        reboot_timeout: "{{ reboot_timeout_seconds }}"
+        msg: "Rolling Proxmox update reboot (Ansible)"
+      when: reboot_required.stat.exists
+
+    - name: Wait for the node to rejoin quorum
+      ansible.builtin.command:
+        cmd: pvecm status
+      changed_when: false
+      register: quorum_after
+      until: "'Quorate: Yes' in quorum_after.stdout"
+      retries: 20
+      delay: 15
+
+- name: Update the PBS node (no clustering concerns, single host)
+  hosts: proxmox_bs
+  become: true
+
+  tasks:
+    - name: Refresh apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Apply distribution upgrade
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Check whether a reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot when required
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+        msg: "PBS update reboot (Ansible)"
+      when: reboot_required.stat.exists

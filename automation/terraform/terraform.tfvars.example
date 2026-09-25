@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (which is git-ignored) and fill in. Never commit this file.
+proxmox_endpoint   = "https://pve01.mgmt.example.com:8006/"
+proxmox_api_token  = "terraform@pve!provider=REPLACE_ME"
+proxmox_insecure   = true
+proxmox_ssh_username = "root"
+
+# An admin key present on your workstation; injected into every guest.
+ssh_public_key = "ssh-ed25519 AAAA...REPLACE_ME"
+
+# Must match the cloud-init template VMID you built on the cluster.
+ubuntu_template_vmid = 9000
+
+# Optional overrides (defaults shown):
+# infra_vlan    = 30
+# infra_gateway = "10.10.30.1"
+# lxc_template  = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"

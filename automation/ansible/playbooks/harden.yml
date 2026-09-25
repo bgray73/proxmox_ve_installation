@@ -1,0 +1,121 @@
+---
+# Post-install hardening for Proxmox VE and PBS nodes.
+#
+# Run once after first boot, before clustering:
+#   python3 scripts/gen_inventory.py > inventory.json
+#   ansible-playbook -i inventory.json playbooks/harden.yml
+#
+# Uses only ansible.builtin modules (no collection dependencies).
+- name: Harden Proxmox hosts
+  hosts: proxmox_ve:proxmox_bs
+  become: true
+
+  vars:
+    # EDIT: admin keys that must be able to SSH in as root.
+    admin_ssh_keys:
+      # - "ssh-ed25519 AAAA... operator@workstation"
+    target_timezone: "America/New_York"
+    # EDIT: internal NTP once you stand one up; public pool until then.
+    ntp_servers:
+      - "0.pool.ntp.org"
+      - "1.pool.ntp.org"
+    # Set true to install fail2ban for SSH brute-force protection.
+    install_fail2ban: true
+
+  tasks:
+    - name: Fail if no admin SSH keys are defined
+      ansible.builtin.assert:
+        that:
+          - admin_ssh_keys | length > 0
+        fail_msg: "Define at least one key in admin_ssh_keys before running."
+
+    - name: Set system timezone
+      ansible.builtin.command:
+        cmd: "timedatectl set-timezone {{ target_timezone }}"
+      changed_when: false
+
+    - name: Configure systemd-timesyncd NTP servers
+      ansible.builtin.copy:
+        dest: /etc/systemd/timesyncd.conf.d/homelab.conf
+        mode: "0644"
+        content: |
+          [Time]
+          NTP={{ ntp_servers | join(' ') }}
+          FallbackNTP={{ ntp_servers | join(' ') }}
+      notify: Restart timesyncd
+
+    - name: Enable systemd-timesyncd
+      ansible.builtin.systemd:
+        name: systemd-timesyncd
+        enabled: true
+        state: started
+
+    - name: Install admin SSH keys for root
+      ansible.builtin.authorized_key:
+        user: root
+        key: "{{ item }}"
+        state: present
+      loop: "{{ admin_ssh_keys }}"
+
+    - name: Harden sshd - disable password auth for root
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config.d/99-homelab.conf
+        create: true
+        mode: "0600"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin prohibit-password' }
+        - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+      notify: Restart sshd
+
+    - name: Install fail2ban
+      ansible.builtin.apt:
+        name: fail2ban
+        state: present
+        update_cache: true
+      when: install_fail2ban
+
+    - name: Enable fail2ban
+      ansible.builtin.systemd:
+        name: fail2ban
+        enabled: true
+        state: started
+      when: install_fail2ban
+
+    - name: Report node identity and time sync
+      ansible.builtin.command:
+        cmd: "{{ item }}"
+      loop:
+        - "hostname -f"
+        - "timedatectl show -p NTPSynchronized --value"
+      changed_when: false
+      register: report
+
+    - name: Report Proxmox version (VE nodes only)
+      ansible.builtin.command:
+        cmd: pveversion
+      changed_when: false
+      register: pve_report
+      when: inventory_hostname in groups.get('proxmox_ve', [])
+
+    - name: Show node report
+      ansible.builtin.debug:
+        msg: "{{ report.results | map(attribute='stdout') | list }}"
+
+    - name: Show Proxmox version
+      ansible.builtin.debug:
+        msg: "{{ pve_report.stdout }}"
+      when: pve_report is not skipped
+
+  handlers:
+    - name: Restart timesyncd
+      ansible.builtin.systemd:
+        name: systemd-timesyncd
+        state: restarted
+
+    - name: Restart sshd
+      ansible.builtin.systemd:
+        name: sshd
+        state: restarted
