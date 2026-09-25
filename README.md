@@ -90,6 +90,7 @@ inventory.example.json              Five-host sanitized template
 secrets.env.example                 Secret/environment template
 templates/                          Optional post-install guest templates (cloud-init)
 agents/                             Optional LabOps demo agents (A2A)
+automation/                         Post-deploy automation (Terraform fleet + Ansible ops)
 ```
 
 Optional post-install material (not required for ISO install):

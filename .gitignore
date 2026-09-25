@@ -1,5 +1,6 @@
 .env
 inventory.json
+automation/ansible/inventory.json
 output/
 tls/
 *.iso

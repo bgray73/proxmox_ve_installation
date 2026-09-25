@@ -1,0 +1,142 @@
+---
+# On-demand packet capture on Proxmox nodes.
+#
+# Captures run inside an ephemeral, privileged netshoot container attached to
+# the HOST network namespace, so tcpdump sees the node's real interfaces
+# (vmbr0, vmbr0.<vlan>, physical NICs). A regular LXC cannot do this - it
+# lives in its own network namespace and only sees its own veth.
+#
+# Start a capture on one node:
+#   ansible-playbook -i inventory.json playbooks/packet-capture.yml -l pve01 \
+#     -e "capture_state=started capture_interface=vmbr0 capture_filter='tcp port 8006' capture_name=gui-debug"
+#
+# Stop it and pull the pcap back for Wireshark:
+#   ansible-playbook -i inventory.json playbooks/packet-capture.yml -l pve01 \
+#     -e "capture_state=stopped capture_name=gui-debug"
+#
+# Variables:
+#   capture_state      started | stopped              (required)
+#   capture_name       short label, e.g. corosync-debug (required)
+#   capture_interface  e.g. vmbr0, vmbr0.20, eno1     (default: vmbr0)
+#   capture_filter     tcpdump filter expression      (default: empty = all traffic)
+#   capture_duration   seconds before auto-stop       (default: 0 = run until stopped)
+#   capture_cleanup    delete the node-side pcap after fetching it (default: true)
+#
+# Notes:
+# - Installs docker.io on the target node(s) on first use; the capture
+#   container itself is ephemeral (--rm) and removed on stop.
+# - A privileged, host-networked container is effectively root on the node:
+#   only run this yourself, for short troubleshooting windows.
+# - pcaps can contain sensitive traffic; they are fetched over SSH into
+#   ./captures/<host>/ on the control machine.
+#
+# Uses only ansible.builtin modules; talks to the Docker CLI directly.
+- name: On-demand packet capture
+  hosts: proxmox_ve:proxmox_bs
+  become: true
+
+  vars:
+    capture_interface: "vmbr0"
+    capture_filter: ""
+    capture_duration: 0
+    capture_cleanup: true
+    capture_dir: "/var/tmp/packet-captures"
+    capture_image: "docker.io/nicolaka/netshoot:latest"
+
+  tasks:
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - capture_state is defined
+          - capture_state in ["started", "stopped"]
+          - capture_name is defined
+          - capture_name | length > 0
+        fail_msg: "Set -e 'capture_state=started|stopped capture_name=<label>'. See the header comments."
+
+    - name: Ensure Docker is installed (capture runtime)
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+        update_cache: true
+      when: capture_state == "started"
+
+    - name: Ensure Docker service is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+      when: capture_state == "started"
+
+    - name: Create node-side capture directory
+      ansible.builtin.file:
+        path: "{{ capture_dir }}"
+        state: directory
+        mode: "0700"
+      when: capture_state == "started"
+
+    - name: Check for an already-running capture with this label
+      ansible.builtin.command:
+        cmd: docker ps -q --filter "name=pcap-{{ capture_name }}"
+      changed_when: false
+      register: existing_capture
+      when: capture_state == "started"
+
+    - name: Start ephemeral capture container
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          TS=$(date +%Y%m%d-%H%M%S)
+          {% if capture_duration | int > 0 %}TIMEOUT="timeout {{ capture_duration }}"{% else %}TIMEOUT=""{% endif %}
+          docker run -d --rm --name "pcap-{{ capture_name }}" \
+            --network host --privileged \
+            --cap-add NET_ADMIN --cap-add NET_RAW \
+            -v "{{ capture_dir }}:/captures" \
+            "{{ capture_image }}" \
+            $TIMEOUT tcpdump -i "{{ capture_interface }}" -U \
+            -w "/captures/{{ capture_name }}-${TS}.pcap" {{ capture_filter }}
+        executable: /bin/bash
+      changed_when: true
+      when: capture_state == "started" and existing_capture.stdout == ""
+
+    - name: Report already-running capture
+      ansible.builtin.debug:
+        msg: "A capture named '{{ capture_name }}' is already running on {{ inventory_hostname }}; not starting another."
+      when: capture_state == "started" and existing_capture.stdout != ""
+
+    - name: Locate the newest pcap for this label
+      ansible.builtin.shell:
+        cmd: ls -t {{ capture_dir }}/{{ capture_name }}-*.pcap 2>/dev/null | head -1
+        executable: /bin/bash
+      changed_when: false
+      register: pcap_path
+      when: capture_state == "stopped"
+
+    - name: Stop and remove the capture container
+      ansible.builtin.command:
+        cmd: docker stop "pcap-{{ capture_name }}"
+      register: stop_result
+      changed_when: stop_result.rc == 0
+      failed_when: false
+      when: capture_state == "stopped"
+
+    - name: Fetch the pcap to the control host
+      ansible.builtin.fetch:
+        src: "{{ pcap_path.stdout }}"
+        dest: "captures/{{ inventory_hostname }}/"
+        flat: true
+      when: capture_state == "stopped" and pcap_path.stdout | length > 0
+
+    - name: Warn when no pcap was found
+      ansible.builtin.debug:
+        msg: "No pcap found for '{{ capture_name }}' on {{ inventory_hostname }}; nothing fetched."
+      when: capture_state == "stopped" and pcap_path.stdout | length == 0
+
+    - name: Remove the node-side pcap after fetch
+      ansible.builtin.file:
+        path: "{{ pcap_path.stdout }}"
+        state: absent
+      when: capture_state == "stopped" and capture_cleanup | bool and pcap_path.stdout | length > 0
+
+    - name: Report capture state
+      ansible.builtin.debug:
+        msg: "Capture '{{ capture_name }}' {{ capture_state }} on {{ inventory_hostname }} (interface {{ capture_interface }})."
