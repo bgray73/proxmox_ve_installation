@@ -27,16 +27,16 @@ that every node uses the same one and you never mix them.
 ```bash
 # On every PVE node (pve01..pve03):
 grep -rh '^deb' /etc/apt/sources.list.d/ | sort -u
-# Enterprise: deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise
+# Enterprise: deb https://enterprise.proxmox.com/debian/pve trixie pve-enterprise
 #   (file: /etc/apt/sources.list.d/pve-enterprise.list)
-# No-subscription: deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+# No-subscription: deb http://download.proxmox.com/debian/pve trixie pve-no-subscription
 #   (file: /etc/apt/sources.list.d/pve-no-subscription.list)
 
 # On pbs01:
 grep -rh '^deb' /etc/apt/sources.list.d/ | sort -u
-# Enterprise: deb https://enterprise.proxmox.com/debian/pbs bookworm pbs-enterprise
+# Enterprise: deb https://enterprise.proxmox.com/debian/pbs trixie pbs-enterprise
 #   (file: /etc/apt/sources.list.d/pbs-enterprise.list)
-# No-subscription: deb http://download.proxmox.com/debian/pbs bookworm pbs-no-subscription
+# No-subscription: deb http://download.proxmox.com/debian/pbs trixie pbs-no-subscription
 #   (file: /etc/apt/sources.list.d/pbs-no-subscription.list)
 ```
 
@@ -44,9 +44,9 @@ To switch a node to no-subscription (one time):
 
 ```bash
 sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list   # or pbs-enterprise.list
-echo "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" \
+echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" \
   > /etc/apt/sources.list.d/pve-no-subscription.list
-# PBS equivalent: .../debian/pbs bookworm pbs-no-subscription
+# PBS equivalent: .../debian/pbs trixie pbs-no-subscription
 ```
 
 Also confirm disk space for new kernels: `df -h / /boot` — `/boot`
@@ -135,7 +135,7 @@ node is unrecoverable, the rebuild path is `docs/DISASTER-RECOVERY.md`.
   required) = cluster stops making decisions, HA fencing can fire.
 - **Never reboot with an active backup, restore, PBS verify/GC, or ZFS
   scrub.** Check first; reschedule the job if needed.
-- **Never jump a Debian major version** (bookworm → next) as part of
+- **Never jump a Debian major version** (trixie → next) as part of
   routine patching. Major upgrades are a project: read the Proxmox
   upgrade wiki, snapshot/back up everything, and do it on a quiet
   weekend — not in this runbook.

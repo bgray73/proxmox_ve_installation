@@ -1,16 +1,16 @@
 # Proxmox VE notifications → ntfy
 
-Wire the cluster's native PVE 8 notification system to the `ntfy` LXC this
+Wire the cluster's native PVE 9 notification system to the `ntfy` LXC this
 repo deploys via Terraform (currently `10.10.41.14`, VLAN 41). Backup job
 failures, replication errors, and HA/fencing events then arrive as push
 notifications instead of dying in a local mailbox nobody reads.
 
-## How PVE 8 notifications work
+## How PVE 9 notifications work
 
 Two concepts, both stored cluster-wide in `/etc/pve/notifications.cfg`
 (replicated by pmxcfs — configure on **exactly one** node):
 
-- **Targets** — *where* a notification goes. PVE 8 ships sendmail, SMTP,
+- **Targets** — *where* a notification goes. PVE 9 ships sendmail, SMTP,
   Gotify, and **webhook** targets. A webhook target performs an HTTP request
   to a configurable URL.
 - **Matchers** — *what* goes *where*. A matcher routes notifications to one

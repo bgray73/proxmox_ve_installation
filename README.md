@@ -82,7 +82,7 @@ scripts/rotate_answer_token.sh      Regenerates ANSWER_TOKEN in .env
 scripts/update_firmware.sh        Dell DSU / Supermicro SUM firmware maintenance
 scripts/pbs_restore_test.sh       PBS restore test: restore canary backup to throwaway VMID, verify boot, tear down
 scripts/disk_health.sh            ZFS scrub schedule + zed + smartd monitoring (ntfy alerts)
-scripts/configure_ntfy_alerts.sh  Wire PVE 8 notification webhooks to the ntfy LXC
+scripts/configure_ntfy_alerts.sh  Wire PVE 9 notification webhooks to the ntfy LXC
 scripts/pbs_config_backup.sh      Cron-friendly backup of /etc/proxmox-backup off the PBS host
 scripts/hc_ping.sh                Healthchecks.io dead-man's switch: quorum heartbeat + backup freshness
 scripts/run_answer_server.sh        Starts the host-aware answer service
@@ -93,7 +93,7 @@ network/                            Nexus 9K VLAN/port templates + HA notes
 remote-access/                      Tailscale design, policy, installer
 docs/PBS-STORAGE.md                 PBS disk/controller design checklist
 docs/BACKUP-RESTORE-TESTS.md        Automated PBS restore testing runbook
-docs/NOTIFICATIONS.md               PVE 8 notification webhooks -> ntfy
+docs/NOTIFICATIONS.md               PVE 9 notification webhooks -> ntfy
 docs/DISK-HEALTH.md                 ZFS scrub + SMART monitoring runbook
 docs/POWER-NUT.md                   NUT graceful-shutdown runbook
 docs/DISASTER-RECOVERY.md           Full-site rebuild runbook

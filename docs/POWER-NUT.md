@@ -2,7 +2,7 @@
 
 One UPS, five machines, no graceful degradation without monitoring. NUT
 (Network UPS Tools) watches the UPS and shuts everything down in the right
-order when the battery runs out. Debian 12 (and Proxmox VE) ship NUT 2.8,
+order when the battery runs out. Debian 13 (and Proxmox VE) ship NUT 2.8.1,
 which uses `primary`/`secondary` terminology (older guides say master/slave).
 
 ## Topology
