@@ -56,4 +56,19 @@ proxmox-auto-install-assistant prepare-iso "$2" \
 proxmox-auto-install-assistant inspect-iso output/proxmox-ve-auto.iso
 proxmox-auto-install-assistant inspect-iso output/proxmox-backup-server-auto.iso
 sha256sum output/*.iso > output/SHA256SUMS
+# Record which ANSWER_TOKEN was embedded in these ISOs so
+# scripts/check_iso_freshness.sh can detect a stale build after a token
+# rotation. Only the SHA256 fingerprint is stored, never the token itself.
+{
+  printf '{\n  "built_at": "%s",\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  printf '  "answer_token_sha256": "%s",\n' "$(printf '%s' "$ANSWER_TOKEN" | sha256sum | awk '{ print $1 }')"
+  printf '  "isos": {\n'
+  first=1
+  for iso in output/proxmox-ve-auto.iso output/proxmox-backup-server-auto.iso; do
+    [[ $first -eq 1 ]] || printf ',\n'
+    first=0
+    printf '    "%s": "%s"' "$(basename "$iso")" "$(sha256sum "$iso" | awk '{ print $1 }')"
+  done
+  printf '\n  }\n}\n'
+} > output/build-meta.json
 printf '\nBuilt and inspected both ISOs. Checksums: output/SHA256SUMS\n'

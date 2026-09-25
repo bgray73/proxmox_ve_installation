@@ -33,7 +33,9 @@ Finalize this only after the Supermicro disk inventory and controller mode are k
 3. Install PBS only onto the mirrored OS devices.
 4. Create and mount the backup filesystem separately.
 5. Confirm the intended mount with `findmnt` and disk serials.
-6. Run `post-deploy/create_pbs_datastore.sh NAME /mount/path`.
+6. Run `post-deploy/create_pbs_datastore.sh NAME /mount/path`. The script refuses
+   unless the mount is persistent (fstab, an enabled systemd `.mount` unit, or a
+   ZFS dataset); override only deliberately with `ALLOW_TRANSIENT_MOUNT=1`.
 7. Create a least-privilege backup API token and register PBS in PVE.
 8. Run a backup, verification, and full test restore before considering the system production-ready.
 

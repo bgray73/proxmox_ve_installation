@@ -41,5 +41,5 @@ shellcheck:
 # and rendered answer files. Never touches source files, inventory.json,
 # .env, or tls/ (names are pinned to what build_isos.sh generates).
 clean:
-	rm -rf output/answers output/proxmox-ve-auto.iso output/proxmox-backup-server-auto.iso output/SHA256SUMS
-	@echo "Removed generated ISOs, checksums, and rendered answers from output/"
+	rm -rf output/answers output/proxmox-ve-auto.iso output/proxmox-backup-server-auto.iso output/SHA256SUMS output/build-meta.json
+	@echo "Removed generated ISOs, checksums, build metadata, and rendered answers from output/"

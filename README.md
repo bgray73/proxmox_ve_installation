@@ -75,6 +75,7 @@ post-deploy/create_cluster.sh       Guarded cluster creation (supports --dry-run
 post-deploy/join_cluster.sh         Guarded cluster join for secondary nodes
 post-deploy/create_pbs_datastore.sh Guarded PBS datastore helper
 scripts/build_isos.sh               Builds and inspects both automated ISOs
+scripts/check_iso_freshness.sh      Fails when ISOs predate the current ANSWER_TOKEN
 scripts/generate_tls_certificate.sh Creates pinned HTTPS certificate
 scripts/rotate_answer_token.sh      Regenerates ANSWER_TOKEN in .env
 scripts/run_answer_server.sh        Starts the host-aware answer service
@@ -232,7 +233,10 @@ make isos PVE=... PBS=...
 1. Mount `output/proxmox-backup-server-auto.iso` through IPMI virtual media or write it to USB.
 2. Boot it and verify the answer server identifies `pbs01`.
 3. After installation, prepare and mount the dedicated backup filesystem.
-4. Create the PBS datastore only after verifying the mount:
+4. Create the PBS datastore only after verifying the mount is persistent
+   (an `/etc/fstab` entry, an enabled systemd `.mount` unit, or a ZFS dataset —
+   a manually mounted filesystem would vanish on reboot and PBS would write to
+   the root filesystem):
 
    ```bash
    post-deploy/create_pbs_datastore.sh --dry-run pbs-main /backup/pbs-main

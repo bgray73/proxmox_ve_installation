@@ -9,11 +9,17 @@ import os
 import re
 import ssl
 import sys
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
 PLACEHOLDERS = ("CHANGE_ME", "example.com", "192.0.2.", "AAAATEST")
+
+
+def _log(message: str, file: Any = sys.stdout) -> None:
+    """Timestamped log line (UTC, ISO 8601). Flush so systemd captures every line."""
+    print(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} {message}", file=file, flush=True)
 
 
 class InventoryError(ValueError):
@@ -254,14 +260,14 @@ class AnswerHandler(BaseHTTPRequestHandler):
             host = find_host(self.inventory, info)
             answer = build_answer(self.inventory, host, self.password_hash)
         except (json.JSONDecodeError, InventoryError, ValueError) as exc:
-            print(f"request rejected from {self.client_address[0]}: {exc}", file=sys.stderr)
+            _log(f"request rejected from {self.client_address[0]}: {exc}", file=sys.stderr)
             self._reply(400, f"request rejected: {exc}\n")
             return
-        print(f"served {host['product']} answer for {host['name']} to {self.client_address[0]}")
+        _log(f"served {host['product']} answer for {host['name']} to {self.client_address[0]}")
         self._reply(200, answer, "application/toml; charset=utf-8")
 
     def log_message(self, fmt: str, *args: Any) -> None:
-        print(f"{self.client_address[0]} - {fmt % args}")
+        _log(f"{self.client_address[0]} - {fmt % args}")
 
 
 def main() -> int:
@@ -278,7 +284,7 @@ def main() -> int:
         auth_token = validate_auth_token(os.environ["ANSWER_TOKEN"])
         build_answer(inventory, inventory["hosts"][0], password_hash)
     except (InventoryError, KeyError) as exc:
-        print(f"fatal: {exc}", file=sys.stderr)
+        _log(f"fatal: {exc}", file=sys.stderr)
         return 2
     AnswerHandler.inventory = inventory
     AnswerHandler.password_hash = password_hash
@@ -290,10 +296,10 @@ def main() -> int:
         context.load_cert_chain(args.tls_cert, args.tls_key)
         server.socket = context.wrap_socket(server.socket, server_side=True)
     except (OSError, ssl.SSLError) as exc:
-        print(f"fatal: cannot configure TLS: {exc}", file=sys.stderr)
+        _log(f"fatal: cannot configure TLS: {exc}", file=sys.stderr)
         server.server_close()
         return 2
-    print(f"answer server listening on https://{args.listen}:{args.port}/answer")
+    _log(f"answer server listening on https://{args.listen}:{args.port}/answer")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

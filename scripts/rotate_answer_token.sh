@@ -40,6 +40,7 @@ echo "  2. Rebuild both automated ISOs with scripts/build_isos.sh so the"
 echo "     new token is embedded."
 echo "  3. Protect the new ISOs; the token is present in plain text inside them."
 echo "  4. Restart the answer server so it loads the new token from .env."
+echo "  5. After rebuilding, verify with scripts/check_iso_freshness.sh."
 echo
 echo "New token (also written to .env):"
 echo "  $NEW_TOKEN"

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "server"))
 
-from answer_server import InventoryError, build_answer, find_host, load_inventory, validate_auth_token
+from answer_server import InventoryError, _log, build_answer, find_host, load_inventory, validate_auth_token
 
 TEST_HASH = "$6$testsalt$" + "A" * 86
 
@@ -181,6 +181,13 @@ class AnswerServerTests(unittest.TestCase):
         for bad in ("$6$hash", "$6$salt$short", "plain-text"):
             with self.assertRaises(InventoryError):
                 build_answer(self.inventory, self.inventory["hosts"][0], bad)
+
+    def test_log_lines_carry_utc_iso8601_timestamps(self):
+        import io
+
+        buf = io.StringIO()
+        _log("hello", file=buf)
+        self.assertRegex(buf.getvalue(), r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00 hello\n$")
 
 
 def load_inventory_data(data):
