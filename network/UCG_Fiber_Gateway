@@ -10,7 +10,9 @@ Networks (Settings → Networks)
 VLAN	Name	Subnet	Gateway IP	DHCP	Internet	Notes
 10	OOB_IDRAC_BMC	10.10.10.0/24	10.10.10.1	Off (static iDRACs)	Off	matches 2960-X ip default-gateway 10.10.10.1
 20	PVE_MGMT	10.10.20.0/24	10.10.20.1	On or static	Off	separate instance per switch — not L2-shared
-21	COROSYNC_A	10.10.21.0/24	10.10.21.1	Off	Off	keep minimally routed — see firewall rules
+# 21	COROSYNC_A — INTENTIONALLY NOT CREATED. Corosync is pure L2 on the Nexus
+#     (no gateway, no SVI, not trunked to this gateway). Isolation is by design,
+#     not by firewall rule. Addressing plan reserves 10.10.21.0/24 if ever needed.
 30	PBS_MGMT	10.10.30.0/24	10.10.30.1	On or static	Off	
 31	PBS_BACKUP_40G	10.10.31.0/24	10.10.31.1	Off	Off	
 40	INFRA_TAILSCALE	10.10.40.0/24	10.10.40.1	Off	On	UPS/PDU/Tailscale subnet routers
@@ -31,13 +33,13 @@ Tagged VLANs: 10, 20, 30, 40, 50, 60, 70, 80
 Profile: TRUNK-TO-NEXUS-CORE
 
 Native Network: BLACKHOLE_NATIVE (or "None")
-Tagged VLANs: 20, 21, 30, 31, 41, 100
+Tagged VLANs: 20, 30, 31, 41, 100
 Traffic/Firewall Rules (Settings → Security → Traffic Rules / Firewall Rules)
 Implements the isolation intent documented in both switch configs:
 
-Block VLAN 21 (Corosync) → Internet, and VLAN 21 → all other VLANs except where cluster nodes genuinely need reachability (usually none beyond itself).
+VLAN 21 (Corosync): no rules needed — it is not trunked to this gateway and has no gateway address. Isolation is structural (L2-only on the Nexus).
 Block VLAN 31 (PBS Backup) → Internet; restrict to PBS↔PVE traffic only.
-Block Tailscale-sourced traffic → VLAN 21 and VLAN 31 explicitly (enforces "do not route Corosync/PBS backup through Tailscale" — don't rely on omission).
+Block Tailscale-sourced traffic → VLAN 31 explicitly (enforces "do not route PBS backup through Tailscale" — don't rely on omission). VLAN 21 is unreachable from here by design (no SVI, no trunk).
 VLAN 50 (IoT) → deny to VLANs 10, 20, 30, 80; allow IoT → Internet only.
 VLAN 80 (AP mgmt) → allow only from an admin/management source; deny from IoT/Apple TV/iPhones.
 Default posture: inter-VLAN deny, with explicit allows layered on top.
@@ -55,7 +57,7 @@ Port profiles applied to the correct physical ports for each switch trunk
 not done
 Nexus VLAN 40 renumbered to 41 before connecting
 not done
-Firewall rules in place for Corosync/PBS-backup/Tailscale isolation
+Firewall rules in place for PBS-backup/Tailscale isolation (Corosync isolated by L2-only design — confirm VLAN 21 absent from trunk and Networks)
 not done
 IoT → mgmt VLAN deny rules confirmed with a test client
 not done

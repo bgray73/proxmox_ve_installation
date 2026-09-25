@@ -19,10 +19,11 @@ This diagram reflects the current planned homelab design:
 |---:|---|---|
 | 10 | OOB / iDRAC / IPMI / switch management | Restricted management only |
 | 20 | PVE management | GUI, API and SSH management |
-| 21 | Corosync | Cluster membership/quorum; low latency; no Tailscale route |
+| 21 | Corosync | Cluster membership/quorum; low latency; pure L2 on Nexus — no gateway, no Tailscale route |
 | 30 | PBS management | PBS GUI/API/SSH |
 | 31 | PBS backup/restore | Primary PVE↔PBS backup path over 40Gb; no Tailscale route |
-| 40 | Infrastructure / Tailscale | DNS/NTP/monitoring/automation and subnet routers |
+| 40 | Tailscale / infra mgmt | Tailscale subnet routers, UPS, PDU management |
+| 41 | Infrastructure services | DNS, reverse proxy, monitoring, automation, Docker host |
 | 100 | Proxmox SDN / VXLAN transport | Physical underlay for overlay VNets |
 | 998 | Blackhole/native | Unused ports/native safety VLAN |
 

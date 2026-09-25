@@ -15,7 +15,7 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 | E1/21 | PVE01 10Gb failover | trunk | 20,21,31,41,100; native 20 |
 | E1/22 | PVE02 10Gb failover | trunk | 20,21,31,41,100; native 20 |
 | E1/23 | PVE03 10Gb failover | trunk | 20,21,31,41,100; native 20 |
-| E1/48 | firewall/router uplink | trunk | 20,21,30,31,41,100,998 |
+| E1/48 | firewall/router uplink | trunk | 20,30,31,41,100,998 |
 
 > The exact Nexus interfaces used by the four 40Gb QSFP+ server links must be verified on the installed N9K-C9372TX before deployment. The table above is a logical placeholder map, not a claim that E1/11–15 are QSFP ports.
 
@@ -45,7 +45,7 @@ The 2960-X remains Layer 2 in this design. Its management SVI can live in VLAN 1
 |---:|---|---|---|
 | 10 | iDRAC/BMC and restricted switch management | 10.10.10.0/24 | firewall/ACL only |
 | 20 | PVE management | 10.10.20.0/24 | restricted management |
-| 21 | Corosync ring A | 10.10.21.0/24 | no gateway; never through Tailscale |
+| 21 | Corosync ring A | 10.10.21.0/24 (L2 only, no SVI) | no gateway; not trunked to firewall; never through Tailscale |
 | 30 | PBS management | 10.10.30.0/24 | restricted management |
 | 31 | PVE-to-PBS backup/restore over 40Gb | 10.10.31.0/24 | PVE↔PBS only; never through Tailscale |
 | 40 | Tailscale subnet routers, UPS, PDU (2960-X OOB side) | 10.10.40.0/24 | service-specific policy |
