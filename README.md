@@ -94,6 +94,7 @@ remote-access/                      Tailscale design, policy, installer
 docs/PBS-STORAGE.md                 PBS disk/controller design checklist
 docs/BACKUP-RESTORE-TESTS.md        Automated PBS restore testing runbook
 docs/NOTIFICATIONS.md               PVE 9 notification webhooks -> ntfy
+docs/PDM.md                         Proxmox Datacenter Manager VM spec (pdm01)
 docs/DISK-HEALTH.md                 ZFS scrub + SMART monitoring runbook
 docs/POWER-NUT.md                   NUT graceful-shutdown runbook
 docs/DISASTER-RECOVERY.md           Full-site rebuild runbook

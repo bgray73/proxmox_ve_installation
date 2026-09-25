@@ -15,6 +15,7 @@ provider. Compatible with both Terraform and OpenTofu.
 | ntfy          | LXC  | pve01 | 204  | 10.10.41.14   | ntfy (push notifications)            |
 | observability | VM   | pve02 | 300  | 10.10.41.20   | Grafana + Prometheus + Loki          |
 | docker        | VM   | pve03 | 301  | 10.10.41.21   | Docker workload host                 |
+| pdm01         | VM   | pve01 | 302  | 10.10.41.22   | Proxmox Datacenter Manager (HA)      |
 
 All guests sit on the infra VLAN (default 30, `10.10.41.0/24`), get static
 IPs, have your SSH key injected, and start in dependency order (DNS first).
