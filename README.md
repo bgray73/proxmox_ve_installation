@@ -84,6 +84,7 @@ scripts/pbs_restore_test.sh       PBS restore test: restore canary backup to thr
 scripts/disk_health.sh            ZFS scrub schedule + zed + smartd monitoring (ntfy alerts)
 scripts/configure_ntfy_alerts.sh  Wire PVE 8 notification webhooks to the ntfy LXC
 scripts/pbs_config_backup.sh      Cron-friendly backup of /etc/proxmox-backup off the PBS host
+scripts/hc_ping.sh                Healthchecks.io dead-man's switch: quorum heartbeat + backup freshness
 scripts/run_answer_server.sh        Starts the host-aware answer service
 scripts/validate_inventory.py       Fails closed on bad/placeholder inventory
 server/answer_server.py             Dependency-free answer server
@@ -101,6 +102,7 @@ docs/BACKUP-JOBS.md                 Codified backup schedule + retention policy
 docs/PBS-MAINTENANCE.md             PBS verify/GC/prune + config backup runbook
 docs/UPDATES.md                     Node-by-node patching runbook
 docs/SECURITY.md                    TOTP 2FA, SSH key-only, unattended security updates
+docs/DEADMAN-SWITCH.md              Healthchecks.io offsite dead-man's switch runbook
 docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
 docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
 inventory.example.json              Five-host sanitized template
