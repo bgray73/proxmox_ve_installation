@@ -78,6 +78,7 @@ scripts/build_isos.sh               Builds and inspects both automated ISOs
 scripts/check_iso_freshness.sh      Fails when ISOs predate the current ANSWER_TOKEN
 scripts/generate_tls_certificate.sh Creates pinned HTTPS certificate
 scripts/rotate_answer_token.sh      Regenerates ANSWER_TOKEN in .env
+scripts/update_firmware.sh        Dell DSU / Supermicro SUM firmware maintenance
 scripts/run_answer_server.sh        Starts the host-aware answer service
 scripts/validate_inventory.py       Fails closed on bad/placeholder inventory
 server/answer_server.py             Dependency-free answer server
@@ -217,6 +218,13 @@ make isos PVE=... PBS=...
 `scripts/rotate_answer_token.sh` writes a new high-entropy `ANSWER_TOKEN` into `.env` and prints the rebuild checklist.
 
 ## Deploy
+
+### 0. Firmware first (before any Proxmox install)
+
+Update iDRAC/BIOS/NIC/storage-controller firmware on all five machines — see
+`docs/FIRMWARE.md`. Dell nodes: `scripts/update_firmware.sh dell --via idrac`
+from a workstation on the management network. Supermicro: BMC web update +
+BIOS via UEFI shell (or SUM once an OS exists).
 
 ### Four Dell PVE nodes
 
