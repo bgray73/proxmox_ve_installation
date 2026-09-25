@@ -8,6 +8,26 @@ cd "$ROOT"
 [[ -f inventory.json ]] || { echo "Missing inventory.json" >&2; exit 2; }
 command -v proxmox-auto-install-assistant >/dev/null || { echo "Install proxmox-auto-install-assistant first" >&2; exit 2; }
 command -v xorriso >/dev/null || { echo "Install xorriso first" >&2; exit 2; }
+fail() { echo "ERROR: $*" >&2; exit 1; }
+
+# Fail closed: SHA256-verify each source ISO against iso-checksums.txt
+# (official hashes: https://www.proxmox.com/en/downloads) before building.
+CHECKSUM_FILE="$ROOT/iso-checksums.txt"
+[[ -f "$CHECKSUM_FILE" ]] || fail "Missing $CHECKSUM_FILE (see iso-checksums.txt header for format)"
+verify_iso() {
+  local iso="$1" base expected actual
+  [[ -f "$iso" ]] || fail "ISO not found: $iso"
+  base="$(basename "$iso")"
+  expected="$(grep -v '^[[:space:]]*#' "$CHECKSUM_FILE" | grep -v '^[[:space:]]*$' \
+    | awk -v f="$base" '$2 == f { print $1; exit }')"
+  [[ -n "$expected" ]] || fail "No checksum entry for '$base' in iso-checksums.txt; add the official SHA256 for this exact ISO"
+  [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || fail "Checksum entry for '$base' is a placeholder or malformed; paste the official 64-char SHA256 from https://www.proxmox.com/en/downloads"
+  actual="$(sha256sum "$iso" | awk '{ print $1 }')"
+  [[ "${actual,,}" == "${expected,,}" ]] || fail "SHA256 mismatch for '$base': expected $expected, got $actual; re-download the ISO"
+  echo "Checksum OK: $base"
+}
+verify_iso "$1"
+verify_iso "$2"
 set -a
 # shellcheck disable=SC1091
 source .env

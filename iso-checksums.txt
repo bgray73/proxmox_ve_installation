@@ -1,0 +1,21 @@
+# SHA256 checksums for the Proxmox source ISOs used by scripts/build_isos.sh.
+#
+# WHERE TO GET THE OFFICIAL CHECKSUMS:
+#   https://www.proxmox.com/en/downloads
+# Each download entry (Proxmox VE, Proxmox Backup Server) links a SHA256SUMS
+# file. Copy the hash for the EXACT ISO version you downloaded.
+#
+# FORMAT (same as `sha256sum` output, one per line):
+#   <64 hex characters><two spaces><exact ISO filename>
+# Lines starting with '#' and blank lines are ignored.
+#
+# The filename must match the basename of the ISO file you pass to
+#   scripts/build_isos.sh /path/to/pve.iso /path/to/pbs.iso
+# (e.g. if you pass /tmp/isos/proxmox-ve_9.0-1.iso, the entry's filename
+#  must be exactly "proxmox-ve_9.0-1.iso").
+#
+# build_isos.sh FAILS CLOSED: it refuses to build if an entry is missing,
+# still a placeholder, or the ISO's hash does not match. Replace both
+# placeholder lines below before building.
+REPLACE_WITH_64_HEX_CHARS  proxmox-ve_9.0-1.iso
+REPLACE_WITH_64_HEX_CHARS  proxmox-backup-server_4.0-1.iso

@@ -10,6 +10,11 @@ ssh_public_key = "ssh-ed25519 AAAA...REPLACE_ME"
 # Must match the cloud-init template VMID you built on the cluster.
 ubuntu_template_vmid = 9000
 
+# Optional, default-off modules (see firewall.tf / ha.tf):
+# manage_firewall = false
+# manage_ha       = false
+# admin_networks  = ["10.10.10.0/24"]  # required (non-empty) if manage_firewall = true
+
 # Optional overrides (defaults shown):
 # infra_vlan    = 30
 # infra_gateway = "10.10.30.1"

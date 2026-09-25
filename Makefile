@@ -1,7 +1,7 @@
 # Operator convenience targets for the Proxmox deploy kit.
 # Secrets and site inventory stay outside Git (.env, inventory.json).
 
-.PHONY: help validate test cert server isos rotate-token shellcheck
+.PHONY: help validate test cert server isos rotate-token shellcheck clean
 
 help:
 	@echo "Common targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  make isos PVE=... PBS=... - build automated ISOs"
 	@echo "  make rotate-token - regenerate ANSWER_TOKEN in .env"
 	@echo "  make shellcheck   - bash -n on all scripts"
+	@echo "  make clean        - remove generated ISOs, checksums, rendered answers"
 
 validate:
 	python3 scripts/validate_inventory.py inventory.json
@@ -35,3 +36,10 @@ rotate-token:
 
 shellcheck:
 	bash -n scripts/*.sh first-boot/*.sh post-deploy/*.sh remote-access/*.sh
+
+# Remove build artifacts only: generated automated ISOs, their SHA256SUMS,
+# and rendered answer files. Never touches source files, inventory.json,
+# .env, or tls/ (names are pinned to what build_isos.sh generates).
+clean:
+	rm -rf output/answers output/proxmox-ve-auto.iso output/proxmox-backup-server-auto.iso output/SHA256SUMS
+	@echo "Removed generated ISOs, checksums, and rendered answers from output/"

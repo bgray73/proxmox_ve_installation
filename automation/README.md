@@ -36,3 +36,29 @@ has done its job.
   using root.
 - The Ansible hardening playbook disables SSH password auth for root —
   make sure your key works before running it (test `ssh root@<node>` first).
+
+## Secrets hygiene (sops + age)
+
+Anything with real secrets that must live alongside the repo
+(`terraform.tfvars`, Ansible vault vars) should be encrypted at rest with
+[sops](https://github.com/getsops/sops) and age, not just git-ignored:
+
+```bash
+# one-time: generate an age key
+age-keygen -o ~/.config/sops/age/keys.txt   # keep this private, back it up
+
+# .sops.yaml at the repo root
+cat > .sops.yaml <<'EOF'
+creation_rules:
+  - path_regex: automation/(terraform/terraform\.tfvars|ansible/vars\.yml)$
+    age: AGE_RECIPIENT_PUBLIC_KEY
+EOF
+
+# encrypt in place (edit with: sops automation/terraform/terraform.tfvars)
+sops -e -i automation/terraform/terraform.tfvars
+```
+
+Encrypted files are safe to commit; sops decrypts transparently when
+Terraform/Ansible read them via `sops exec-file` or editor integration.
+Never commit the age private key — it lives only on operator machines
+(and a backup). Rotate it if a machine is lost.
