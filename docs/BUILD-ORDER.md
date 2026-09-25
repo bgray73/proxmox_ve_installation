@@ -49,7 +49,8 @@ phase gates the next — do not skip ahead past a verification step.
 
 ## Phase 6 — Proxmox Backup Server
 
-- [ ] Install the 9300-8i in pbs01; confirm direct disk/SMART
+- [ ] Install the 9300-8i in pbs01 (runbook: `docs/HBA-SWAP.md`;
+      identify the backplane first); confirm direct disk/SMART
       visibility through the IT-mode HBA.
 - [ ] Install PBS 4.2; create pools per `docs/PBS-STORAGE.md`
       (re-verify disk health before `zpool create`).

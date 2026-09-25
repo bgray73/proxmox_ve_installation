@@ -97,6 +97,7 @@ docs/NOTIFICATIONS.md               PVE 9 notification webhooks -> ntfy
 docs/PDM.md                         Proxmox Datacenter Manager VM spec (pdm01)
 docs/INSTALL-MEDIA.md               Ventoy USB stick + verified ISO hashes
 docs/BUILD-ORDER.md                 Ordered build checklist: rack to finished homelab
+docs/HBA-SWAP.md                    9300-8i swap runbook for pbs01 (mezzanine removal to SMART verification)
 docs/DISK-HEALTH.md                 ZFS scrub + SMART monitoring runbook
 docs/POWER-NUT.md                   NUT graceful-shutdown runbook
 docs/DISASTER-RECOVERY.md           Full-site rebuild runbook
