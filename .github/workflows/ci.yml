@@ -1,0 +1,110 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Validate a completed example inventory
+        # inventory.example.json ships with placeholders (fail-safe by design);
+        # substitute documentation-safe values and prove the validator accepts it.
+        run: |
+          sed -e 's/CHANGE_ME/TEST/g' \
+              -e 's/example\.com/test.invalid/g' \
+              -e 's/192\.0\.2\./10.9.9./g' \
+              -e 's/AAAATEST/AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM3TEST/g' \
+              inventory.example.json > inventory.json
+          make validate
+
+      - name: Ansible inventory generator
+        run: |
+          cp inventory.json /tmp/inv-check.json
+          mkdir -p /tmp/inv-tree/automation/ansible/scripts
+          cp /tmp/inv-check.json /tmp/inv-tree/inventory.json
+          cp automation/ansible/scripts/gen_inventory.py /tmp/inv-tree/automation/ansible/scripts/
+          python3 /tmp/inv-tree/automation/ansible/scripts/gen_inventory.py > /tmp/ansible-inventory.json
+          python3 -c "
+          import json
+          d = json.load(open('/tmp/ansible-inventory.json'))
+          ch = d['all']['children']
+          assert set(ch) == {'proxmox_ve', 'proxmox_bs'}, ch.keys()
+          assert len(ch['proxmox_ve']['hosts']) == 4
+          assert len(ch['proxmox_bs']['hosts']) == 1
+          print('inventory generator OK')
+          "
+
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash syntax check (make shellcheck)
+        run: make shellcheck
+
+      - name: Install ShellCheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+
+      - name: ShellCheck
+        run: shellcheck --severity=warning scripts/*.sh first-boot/*.sh post-deploy/*.sh remote-access/*.sh
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: automation/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: terraform fmt check
+        run: terraform fmt -check -recursive .
+
+      - name: terraform init (no backend)
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        run: terraform validate
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible-core
+        run: pip install --quiet ansible-core
+
+      - name: Syntax check playbooks
+        run: |
+          cd automation/ansible
+          sed -e 's/CHANGE_ME/TEST/g' \
+              -e 's/example\.com/test.invalid/g' \
+              -e 's/192\.0\.2\./10.9.9./g' \
+              -e 's/AAAATEST/AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM3TEST/g' \
+              ../../inventory.example.json > /tmp/ci-inventory.json
+          mkdir -p /tmp/ansible-tree/automation/ansible/scripts
+          cp /tmp/ci-inventory.json /tmp/ansible-tree/inventory.json
+          cp scripts/gen_inventory.py /tmp/ansible-tree/automation/ansible/scripts/
+          python3 /tmp/ansible-tree/automation/ansible/scripts/gen_inventory.py > inventory.json
+          for pb in playbooks/*.yml; do
+            echo "--- syntax-check $pb"
+            ansible-playbook --syntax-check -i inventory.json "$pb"
+          done

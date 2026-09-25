@@ -50,10 +50,22 @@ elif command -v timedatectl >/dev/null 2>&1; then
 fi
 
 # Optional guest agent for hypervisor tooling (harmless if already present).
+# Each apt call is bounded by a timeout so a hung mirror cannot stall boot;
+# failures are logged and boot continues (install the agent later by hand).
 if command -v apt-get >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq >/dev/null 2>&1 || true
-  apt-get install -y -qq qemu-guest-agent >/dev/null 2>&1 || true
+  APT_TIMEOUT=300
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$APT_TIMEOUT" apt-get update -qq >/dev/null 2>&1 \
+      || log "WARN: apt-get update failed or timed out after ${APT_TIMEOUT}s; continuing without qemu-guest-agent (install it later)"
+    timeout "$APT_TIMEOUT" apt-get install -y -qq qemu-guest-agent >/dev/null 2>&1 \
+      || log "WARN: qemu-guest-agent install failed or timed out after ${APT_TIMEOUT}s; continuing (install it later)"
+  else
+    apt-get update -qq >/dev/null 2>&1 \
+      || log "WARN: apt-get update failed; continuing without qemu-guest-agent (install it later)"
+    apt-get install -y -qq qemu-guest-agent >/dev/null 2>&1 \
+      || log "WARN: qemu-guest-agent install failed; continuing (install it later)"
+  fi
   systemctl enable --now qemu-guest-agent 2>/dev/null || true
 fi
 

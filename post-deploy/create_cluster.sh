@@ -25,11 +25,16 @@ fi
 HOST_FQDN="$(hostname -f 2>/dev/null || hostname)"
 log "Preflight: local host is $HOST_FQDN"
 
-# Basic time-sync check (warn only for dry-run; soft for real runs).
+# Hard gate on time sync: Corosync/cluster operations are sensitive to clock
+# skew. Override only if you know what you are doing: ALLOW_NTP_UNSYNCED=1.
 if command -v timedatectl >/dev/null 2>&1; then
   SYNC="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || echo unknown)"
   if [[ "$SYNC" != "yes" ]]; then
-    log "WARN: NTP is not synchronized (NTPSynchronized=$SYNC)"
+    if [[ "${ALLOW_NTP_UNSYNCED:-0}" == "1" ]]; then
+      log "WARN: NTP is not synchronized (NTPSynchronized=$SYNC); continuing due to ALLOW_NTP_UNSYNCED=1"
+    else
+      fail "NTP is not synchronized (NTPSynchronized=$SYNC). Cluster operations require synced clocks; fix time sync (chrony/systemd-timesyncd) and re-run, or explicitly override with ALLOW_NTP_UNSYNCED=1"
+    fi
   else
     log "Preflight: NTP synchronized"
   fi

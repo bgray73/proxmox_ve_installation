@@ -34,7 +34,11 @@ log "Preflight: target first-node IP is $FIRST_IP"
 if command -v timedatectl >/dev/null 2>&1; then
   SYNC="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || echo unknown)"
   if [[ "$SYNC" != "yes" ]]; then
-    log "WARN: NTP is not synchronized (NTPSynchronized=$SYNC)"
+    if [[ "${ALLOW_NTP_UNSYNCED:-0}" == "1" ]]; then
+      log "WARN: NTP is not synchronized (NTPSynchronized=$SYNC); continuing due to ALLOW_NTP_UNSYNCED=1"
+    else
+      fail "NTP is not synchronized (NTPSynchronized=$SYNC). Joining a cluster requires synced clocks; fix time sync (chrony/systemd-timesyncd) and re-run, or explicitly override with ALLOW_NTP_UNSYNCED=1"
+    fi
   else
     log "Preflight: NTP synchronized"
   fi
