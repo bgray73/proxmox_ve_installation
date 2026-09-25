@@ -3,7 +3,8 @@
 #
 # Creates a cluster-level ipset with the infra guest IPs (derived
 # programmatically from var.containers / var.vms) and a minimal datacenter
-# rule set: DNS to AdGuard, HTTPS to the reverse proxy, and a final DROP for
+# rule set: DNS to AdGuard, HTTPS to the reverse proxy, PVE node -> ntfy
+# (TCP 80, only when var.pve_node_ips is set), and a final DROP for
 # anything else between infra guests.
 #
 # Enable deliberately, e.g.:  tofu apply -var manage_firewall=true
@@ -33,6 +34,12 @@ variable "admin_networks" {
   default     = []
 }
 
+variable "pve_node_ips" {
+  description = "Management IPs of the PVE nodes (the addresses they use to reach the infra VLAN), e.g. [\"10.10.41.2\", \"10.10.41.3\", \"10.10.41.4\"]. Used to allow node-originated traffic (PVE notification webhooks, restore-test reports) to reach the ntfy LXC on TCP 80. Empty (default) means no such rule is created — notifications to ntfy will be dropped by the datacenter INPUT policy."
+  type        = list(string)
+  default     = []
+}
+
 # Fail closed: refuse to manage the datacenter firewall without admin
 # networks defined. Enabling the Proxmox firewall drops unmatched inbound
 # traffic, so an empty allow-list would lock you out of SSH and the web UI.
@@ -58,6 +65,7 @@ locals {
   # in var.containers (see the defaults in variables.tf).
   adguard_ip = split("/", var.containers["adguard"].ipv4)[0]
   proxy_ip   = split("/", var.containers["proxy"].ipv4)[0]
+  ntfy_ip    = split("/", var.containers["ntfy"].ipv4)[0]
 }
 
 resource "proxmox_virtual_environment_firewall_ipset" "infra_guests" {
@@ -142,6 +150,23 @@ resource "proxmox_virtual_environment_firewall_rules" "infra" {
       source  = rule.value
       proto   = "tcp"
       dport   = "8006"
+    }
+  }
+
+  # PVE node -> ntfy: the notification webhooks (docs/NOTIFICATIONS.md) and
+  # the restore-test reports (scripts/pbs_restore_test.sh) originate on the
+  # nodes and would otherwise hit the datacenter default INPUT policy on the
+  # ntfy guest. No rule is created while var.pve_node_ips is empty.
+  dynamic "rule" {
+    for_each = var.pve_node_ips
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      comment = "Terraform: allow node ${rule.value} to reach ntfy (TCP 80)"
+      source  = rule.value
+      dest    = local.ntfy_ip
+      proto   = "tcp"
+      dport   = "80"
     }
   }
 

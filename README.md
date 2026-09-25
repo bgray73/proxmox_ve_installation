@@ -79,6 +79,9 @@ scripts/check_iso_freshness.sh      Fails when ISOs predate the current ANSWER_T
 scripts/generate_tls_certificate.sh Creates pinned HTTPS certificate
 scripts/rotate_answer_token.sh      Regenerates ANSWER_TOKEN in .env
 scripts/update_firmware.sh        Dell DSU / Supermicro SUM firmware maintenance
+scripts/pbs_restore_test.sh       PBS restore test: restore canary backup to throwaway VMID, verify boot, tear down
+scripts/disk_health.sh            ZFS scrub schedule + zed + smartd monitoring (ntfy alerts)
+scripts/configure_ntfy_alerts.sh  Wire PVE 8 notification webhooks to the ntfy LXC
 scripts/run_answer_server.sh        Starts the host-aware answer service
 scripts/validate_inventory.py       Fails closed on bad/placeholder inventory
 server/answer_server.py             Dependency-free answer server
@@ -86,6 +89,12 @@ systemd/proxmox-answer-server.service Optional persistent Linux service
 network/                            Nexus 9K VLAN/port templates + HA notes
 remote-access/                      Tailscale design, policy, installer
 docs/PBS-STORAGE.md                 PBS disk/controller design checklist
+docs/BACKUP-RESTORE-TESTS.md        Automated PBS restore testing runbook
+docs/NOTIFICATIONS.md               PVE 8 notification webhooks -> ntfy
+docs/DISK-HEALTH.md                 ZFS scrub + SMART monitoring runbook
+docs/POWER-NUT.md                   NUT graceful-shutdown runbook
+docs/DISASTER-RECOVERY.md           Full-site rebuild runbook
+docs/BURN-IN.md                     Pre-deploy hardware burn-in checklist
 docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
 docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
 inventory.example.json              Five-host sanitized template
