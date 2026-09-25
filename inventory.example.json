@@ -54,7 +54,7 @@
     {
       "name": "pbs01",
       "product": "pbs",
-      "model": "Supermicro CHANGE_ME_MODEL",
+      "model": "Supermicro 6028R-E1CR24N",
       "serial": "CHANGE_ME_SUPERMICRO_SERIAL",
       "fqdn": "pbs01.example.com",
       "management_mac": "02:00:00:00:00:05",

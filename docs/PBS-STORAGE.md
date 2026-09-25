@@ -1,6 +1,19 @@
 # PBS storage design checklist
 
-Finalize this only after the Supermicro disk inventory and controller mode are known.
+## Known hardware (pbs01 — confirmed 2026-09-25)
+
+- Chassis: **Supermicro 6028R-E1CR24N**, 2U, 24× 3.5" LFF hot-swap bays on a
+  SAS3 expander backplane, plus 2× rear 2.5" flex bays. Board: X10DRi.
+- Controller: **Broadcom 3108 HW RAID mezzanine (AOC-S3108M-H8L)** — this is
+  a hardware RAID card, not an HBA. For ZFS it **must** be set to JBOD
+  per-drive passthrough (via the 3108 BIOS utility or StorCLI); never build
+  RAID virtual disks under ZFS. Alternative: replace it with an LSI
+  9300-8i (or equivalent) HBA in IT mode.
+- Suggested layout: PBS OS as a mirror on two small SSDs in the rear flex
+  bays; datastore as ZFS across the 24 LFF bays — **2× 12-disk RAIDZ2**
+  (resilvers faster and degrades more gracefully than one 24-wide vdev).
+  Consider a mirrored enterprise-SSD special vdev for metadata (redundant —
+  losing it loses the pool, and it cannot be removed later).
 
 ## Recommended physical layout
 

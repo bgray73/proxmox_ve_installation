@@ -46,11 +46,13 @@ Dell's online catalog, per node.
 
 ### Supermicro (pbs01) — BMC web UI + UEFI shell
 
-1. Identify the exact board model first (the example inventory still says
-   `CHANGE_ME_MODEL`; fill in the real model).
-2. Download the matching BIOS and BMC firmware from Supermicro for that board.
-3. BMC: web UI → Maintenance → Firmware Update (no license needed).
-4. BIOS: boot the UEFI shell from USB and run the board's `flash.nsh`
+Board is the **X10DRi** (E-ATX, C612, AST2400 BMC) in the 6028R-E1CR24N
+chassis — confirmed 2026-09-25.
+
+1. Download the latest X10DRi BIOS and BMC firmware from Supermicro's
+   X10DRi product page.
+2. BMC: web UI → Maintenance → Firmware Update (no license needed).
+3. BIOS: boot the UEFI shell from USB and run the board's `flash.nsh`
    (or wait until PBS is installed and use SUM in-band, below).
 
 ## Ongoing cadence (quarterly suggested)
