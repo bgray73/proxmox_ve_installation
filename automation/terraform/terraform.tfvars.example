@@ -16,6 +16,6 @@ ubuntu_template_vmid = 9000
 # admin_networks  = ["10.10.10.0/24"]  # required (non-empty) if manage_firewall = true
 
 # Optional overrides (defaults shown):
-# infra_vlan    = 30
-# infra_gateway = "10.10.30.1"
+# infra_vlan    = 41
+# infra_gateway = "10.10.41.1"
 # lxc_template  = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"

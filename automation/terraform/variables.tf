@@ -56,13 +56,13 @@ variable "infra_bridge" {
 variable "infra_vlan" {
   description = "VLAN ID for infrastructure services (see network/PORT-MAP.md)."
   type        = number
-  default     = 30
+  default     = 41
 }
 
 variable "infra_gateway" {
   description = "Default gateway for the infra VLAN."
   type        = string
-  default     = "10.10.30.1"
+  default     = "10.10.41.1"
 }
 
 variable "dns_servers" {
@@ -98,7 +98,7 @@ variable "containers" {
     node          = string
     vmid          = number
     hostname      = string
-    ipv4          = string # CIDR, e.g. "10.10.30.10/24"
+    ipv4          = string # CIDR, e.g. "10.10.41.10/24"
     cores         = number
     memory_mb     = number
     disk_gb       = number
@@ -111,7 +111,7 @@ variable "containers" {
       node          = "pve01"
       vmid          = 200
       hostname      = "adguard"
-      ipv4          = "10.10.30.10/24"
+      ipv4          = "10.10.41.10/24"
       cores         = 1
       memory_mb     = 512
       disk_gb       = 4
@@ -122,7 +122,7 @@ variable "containers" {
       node          = "pve02"
       vmid          = 201
       hostname      = "proxy"
-      ipv4          = "10.10.30.11/24"
+      ipv4          = "10.10.41.11/24"
       cores         = 1
       memory_mb     = 512
       disk_gb       = 4
@@ -133,7 +133,7 @@ variable "containers" {
       node          = "pve03"
       vmid          = 202
       hostname      = "uptime"
-      ipv4          = "10.10.30.12/24"
+      ipv4          = "10.10.41.12/24"
       cores         = 1
       memory_mb     = 512
       disk_gb       = 4
@@ -144,7 +144,7 @@ variable "containers" {
       node          = "pve02"
       vmid          = 203
       hostname      = "semaphore"
-      ipv4          = "10.10.30.13/24"
+      ipv4          = "10.10.41.13/24"
       cores         = 1
       memory_mb     = 1024
       disk_gb       = 8
@@ -155,7 +155,7 @@ variable "containers" {
       node          = "pve01"
       vmid          = 204
       hostname      = "ntfy"
-      ipv4          = "10.10.30.14/24"
+      ipv4          = "10.10.41.14/24"
       cores         = 1
       memory_mb     = 512
       disk_gb       = 4
@@ -184,7 +184,7 @@ variable "vms" {
       node          = "pve02"
       vmid          = 300
       hostname      = "observability"
-      ipv4          = "10.10.30.20/24"
+      ipv4          = "10.10.41.20/24"
       cores         = 4
       memory_mb     = 8192
       disk_gb       = 60
@@ -195,7 +195,7 @@ variable "vms" {
       node          = "pve03"
       vmid          = 301
       hostname      = "docker-01"
-      ipv4          = "10.10.30.21/24"
+      ipv4          = "10.10.41.21/24"
       cores         = 4
       memory_mb     = 8192
       disk_gb       = 60

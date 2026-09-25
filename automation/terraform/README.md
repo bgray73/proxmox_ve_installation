@@ -8,15 +8,15 @@ provider. Compatible with both Terraform and OpenTofu.
 
 | Name          | Type | Node  | VMID | IP            | Purpose                              |
 |---------------|------|-------|------|---------------|--------------------------------------|
-| adguard       | LXC  | pve01 | 200  | 10.10.30.10   | AdGuard Home (DNS + ad blocking)     |
-| proxy         | LXC  | pve02 | 201  | 10.10.30.11   | Nginx Proxy Manager (TLS front door) |
-| uptime        | LXC  | pve03 | 202  | 10.10.30.12   | Uptime Kuma (monitoring + alerts)    |
-| semaphore     | LXC  | pve02 | 203  | 10.10.30.13   | Semaphore (Ansible UI)               |
-| ntfy          | LXC  | pve01 | 204  | 10.10.30.14   | ntfy (push notifications)            |
-| observability | VM   | pve02 | 300  | 10.10.30.20   | Grafana + Prometheus + Loki          |
-| docker        | VM   | pve03 | 301  | 10.10.30.21   | Docker workload host                 |
+| adguard       | LXC  | pve01 | 200  | 10.10.41.10   | AdGuard Home (DNS + ad blocking)     |
+| proxy         | LXC  | pve02 | 201  | 10.10.41.11   | Nginx Proxy Manager (TLS front door) |
+| uptime        | LXC  | pve03 | 202  | 10.10.41.12   | Uptime Kuma (monitoring + alerts)    |
+| semaphore     | LXC  | pve02 | 203  | 10.10.41.13   | Semaphore (Ansible UI)               |
+| ntfy          | LXC  | pve01 | 204  | 10.10.41.14   | ntfy (push notifications)            |
+| observability | VM   | pve02 | 300  | 10.10.41.20   | Grafana + Prometheus + Loki          |
+| docker        | VM   | pve03 | 301  | 10.10.41.21   | Docker workload host                 |
 
-All guests sit on the infra VLAN (default 30, `10.10.30.0/24`), get static
+All guests sit on the infra VLAN (default 30, `10.10.41.0/24`), get static
 IPs, have your SSH key injected, and start in dependency order (DNS first).
 
 ## Usage
