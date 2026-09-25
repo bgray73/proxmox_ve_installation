@@ -149,6 +149,7 @@ the cluster, it does not exist. Review this list quarterly.
 
 - [ ] Password manager: iDRAC/BMC credentials, PBS admin, PVE root, UPS/PDU,
       switch enable secrets, UniFi account, Tailscale admin.
+- [ ] Proxmox TOTP recovery keys (break-glass for 2FA — see docs/SECURITY.md).
 - [ ] PBS API token + secret and the **PBS fingerprint** (needed to re-add
       the storage in Phase 5).
 - [ ] Copy of `.env` (the `ANSWER_TOKEN`) — gitignored, not on GitHub.

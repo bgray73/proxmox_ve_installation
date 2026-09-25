@@ -74,6 +74,7 @@ first-boot/pbs-first-boot.sh        PBS first-boot validation + observability
 post-deploy/create_cluster.sh       Guarded cluster creation (supports --dry-run)
 post-deploy/join_cluster.sh         Guarded cluster join for secondary nodes
 post-deploy/create_pbs_datastore.sh Guarded PBS datastore helper
+post-deploy/configure_backup_jobs.sh Codified vzdump backup jobs (nightly, retention)
 scripts/build_isos.sh               Builds and inspects both automated ISOs
 scripts/check_iso_freshness.sh      Fails when ISOs predate the current ANSWER_TOKEN
 scripts/generate_tls_certificate.sh Creates pinned HTTPS certificate
@@ -82,6 +83,7 @@ scripts/update_firmware.sh        Dell DSU / Supermicro SUM firmware maintenance
 scripts/pbs_restore_test.sh       PBS restore test: restore canary backup to throwaway VMID, verify boot, tear down
 scripts/disk_health.sh            ZFS scrub schedule + zed + smartd monitoring (ntfy alerts)
 scripts/configure_ntfy_alerts.sh  Wire PVE 8 notification webhooks to the ntfy LXC
+scripts/pbs_config_backup.sh      Cron-friendly backup of /etc/proxmox-backup off the PBS host
 scripts/run_answer_server.sh        Starts the host-aware answer service
 scripts/validate_inventory.py       Fails closed on bad/placeholder inventory
 server/answer_server.py             Dependency-free answer server
@@ -95,6 +97,10 @@ docs/DISK-HEALTH.md                 ZFS scrub + SMART monitoring runbook
 docs/POWER-NUT.md                   NUT graceful-shutdown runbook
 docs/DISASTER-RECOVERY.md           Full-site rebuild runbook
 docs/BURN-IN.md                     Pre-deploy hardware burn-in checklist
+docs/BACKUP-JOBS.md                 Codified backup schedule + retention policy
+docs/PBS-MAINTENANCE.md             PBS verify/GC/prune + config backup runbook
+docs/UPDATES.md                     Node-by-node patching runbook
+docs/SECURITY.md                    TOTP 2FA, SSH key-only, unattended security updates
 docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
 docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
 inventory.example.json              Five-host sanitized template
