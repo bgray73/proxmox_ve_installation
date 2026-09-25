@@ -26,7 +26,7 @@ All 26 bays are spoken for. 2.5" SSDs in the front LFF bays need
 | Front ×11 | 11× 1TB HDD | Pool `tank` vdev 1: RAIDZ2, 9TB usable |
 | Front ×3 | 3× 4TB HDD | Pool `tank` vdev 2: 3-way mirror, 4TB usable |
 
-- **Pool `tank`** (bulk backups, one PBS datastore, ≈13TB usable): mixed
+- **Pool `tank`** (bulk backups, ≈13TB usable): mixed
   vdevs are legal in ZFS — an 11-wide RAIDZ2 of 1TB disks plus a 3-way
   mirror of 4TB disks. Never mix disk sizes *within* a vdev (capacity
   clamps to the smallest disk); separate vdevs per size avoids that.
@@ -36,9 +36,9 @@ All 26 bays are spoken for. 2.5" SSDs in the front LFF bays need
   mirrored**: losing it loses the pool, and it cannot be removed later.
   (RAIDZ1 on the 3× 4TB would give 8TB usable instead of 4TB, at only
   single-disk redundancy — not taken.)
-- **Pool `fast`** (second PBS datastore, ≈2TB usable): striped mirrors on
-  SSD for the most critical VMs — faster backup, verify, and restore.
-  Assign per-guest in the PVE backup jobs.
+- **Pool `fast`** (critical VM backups, ≈2TB usable): striped mirrors on
+  SSD — faster backup, verify, and restore. Assign per-guest in the
+  PVE backup jobs.
 - **Not used:** SLOG (PBS does almost no sync writes) and L2ARC (write-heavy
   workload — spend the budget on RAM for ARC instead). PBS chunks are 4MB,
   so they stay on the HDDs; only metadata and small blocks land on the
@@ -47,6 +47,26 @@ All 26 bays are spoken for. 2.5" SSDs in the front LFF bays need
   one spare 512GB SSD and keep the 3108's old cables labeled; HDD spares
   can follow when the 1TB disks age out (that pool is the natural
   upgrade target: replace 1TB disks with larger ones later).
+
+## Datastore layout (2026-09-25)
+
+Three datastores, split by purpose. Datastores are cheap (directories
+on the pool), and each gets its own prune, verify, and GC schedule.
+
+| Datastore | Pool / path | Purpose | Suggested retention |
+|---|---|---|---|
+| `vm-ssd` | `fast` → `/fast/vm-ssd` | VM/LXC backups — the critical tier | keep-daily=7, keep-weekly=4, keep-monthly=6 |
+| `bulk` | `tank` → `/tank/bulk` | File-level backups, ISOs, media | keep-weekly=4, keep-monthly=6 |
+| `scratch` | `tank` → `/tank/scratch` | Dev/test VMs, experiments | keep-daily=3 |
+
+- Point each PVE backup job at the right datastore per guest:
+  production VMs → `vm-ssd`, everything expendable → `scratch`.
+- Verify cadence: weekly on `vm-ssd` (cheap on SSD), monthly on
+  `bulk` and `scratch` (the special vdev keeps HDD verify fast).
+- Future offsite: PBS 4.2 supports S3-backed datastores, so the
+  critical tier (`vm-ssd`) can later gain an S3 copy without
+  rearchitecting (fits the 3-2-1 note under "Datastore requirements
+  and cautions" below).
 
 ## Recommended physical layout
 
