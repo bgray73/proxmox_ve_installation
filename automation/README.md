@@ -18,7 +18,7 @@ has done its job.
 1. Deploy PVE + PBS with the deploy kit as documented in the main README.
 2. `cd ansible && python3 scripts/gen_inventory.py > inventory.json`
 3. `ansible-playbook -i inventory.json playbooks/harden.yml` — SSH keys, NTP,
-   sshd hardening on all five nodes.
+   sshd hardening on all four physical nodes (three PVE nodes and one PBS node).
 4. `cd ../terraform`, copy `terraform.tfvars.example` to `terraform.tfvars`,
    fill in credentials, then `tofu init && tofu plan && tofu apply` (or
    `terraform`).
