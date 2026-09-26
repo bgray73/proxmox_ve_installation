@@ -5,7 +5,7 @@
 Reusable, PXE-free deployment kit for:
 
 - 2 × Dell PowerEdge R640 running Proxmox VE
-- 2 × Dell PowerEdge R440 running Proxmox VE
+- 1 × Dell PowerEdge R440 running Proxmox VE
 - 1 × Supermicro server running Proxmox Backup Server (PBS)
 
 **Validated against:** Proxmox VE / PBS automated installation tooling as of August 2026 (re-validate after major Proxmox ISO or `proxmox-auto-install-assistant` upgrades).
@@ -109,7 +109,7 @@ docs/SECURITY.md                    TOTP 2FA, SSH key-only, unattended security 
 docs/DEADMAN-SWITCH.md              Healthchecks.io offsite dead-man's switch runbook
 docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
 docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
-inventory.example.json              Five-host sanitized template
+inventory.example.json              Four-host sanitized template
 secrets.env.example                 Secret/environment template
 templates/                          Optional post-install guest templates (cloud-init)
 agents/                             Optional LabOps demo agents (A2A)
@@ -132,7 +132,7 @@ Optional post-install material (not required for ISO install):
    ```
 
 3. A temporary DHCP lease must be available on the installation network so the booted installer can reach the answer server. The installed host then uses the static address from the inventory.
-4. The answer server's TCP port (default `8080`) must be reachable by all five servers **from the installation VLAN only**. Do not expose it beyond that path.
+4. The answer server's TCP port (default `8080`) must be reachable by all four physical servers **from the installation VLAN only**. Do not expose it beyond that path.
 5. Collect each server's:
    - service tag/system serial
    - MAC of the intended management NIC
@@ -242,7 +242,7 @@ make isos PVE=... PBS=...
 
 ### 0. Firmware first (before any Proxmox install)
 
-Update iDRAC/BIOS/NIC/storage-controller firmware on all five machines — see
+Update iDRAC/BIOS/NIC/storage-controller firmware on all four physical machines — see
 `docs/FIRMWARE.md`. Dell nodes: `scripts/update_firmware.sh dell --via idrac`
 from a workstation on the management network. Supermicro: BMC web update +
 BIOS via UEFI shell (or SUM once an OS exists).
