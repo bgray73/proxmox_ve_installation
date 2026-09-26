@@ -1,6 +1,6 @@
 # NUT-based graceful shutdown on power loss
 
-One UPS, five machines, no graceful degradation without monitoring. NUT
+One UPS, four physical machines, no graceful degradation without monitoring. NUT
 (Network UPS Tools) watches the UPS and shuts everything down in the right
 order when the battery runs out. Debian 13 (and Proxmox VE) ship NUT 2.8.1,
 which uses `primary`/`secondary` terminology (older guides say master/slave).
@@ -201,7 +201,7 @@ Checklist order — each step is safe; stop when uncomfortable:
 
 - [ ] `upsc ups1@localhost` on pbs01 shows `ups.status: OL`.
 - [ ] `upsc ups1@<pbs01-ip>` works from each PVE node.
-- [ ] `systemctl status nut-server nut-monitor` clean on all five nodes.
+- [ ] `systemctl status nut-server nut-monitor` clean on all four physical nodes.
 - [ ] `journalctl -u nut-monitor -f`, then briefly unplug the UPS *network*
       cable (not mains): expect ONBATT → timer start → plug back → ONLINE →
       timer cancel, no shutdown.
@@ -222,6 +222,6 @@ Checklist order — each step is safe; stop when uncomfortable:
    guests start in their configured order.
 
 Set AC power recovery to **On** (Dell iDRAC: "AC Power Recovery"; Supermicro
-BIOS: "Restore on AC Power Loss" → Power On) on all five nodes so they
+BIOS: "Restore on AC Power Loss" → Power On) on all four physical nodes so they
 self-start when mains returns. Anything without that setting gets powered on
 via iDRAC/IPMI in the same 1→2→3 order.
