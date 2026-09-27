@@ -71,7 +71,15 @@ phase gates the next — do not skip ahead past a verification step.
 
 ## Phase 9 — Backups and monitoring
 
-- [ ] `docs/BACKUP-JOBS.md`: backup jobs to PBS (covers all guests).
+- [ ] `docs/BACKUP-JOBS.md`: `nightly-prod` → `vm-ssd` and
+      `nightly-scratch` → `scratch` jobs; every guest assigned to the
+      `prod` or `scratch` pool.
+- [ ] `docs/PBS-MAINTENANCE.md`: per-datastore prune/verify/GC jobs;
+      retention owned by PBS prune jobs (PVE jobs at `keep-all`).
+- [ ] Backup encryption keys exported to two independent locations +
+      PBS master key recorded (`docs/PBS-MAINTENANCE.md` procedure).
+- [ ] `docs/OFFSITE-PBS.md`: second copy deployed (recommended: offsite
+      PBS pull sync, seeded locally first).
 - [ ] `docs/BACKUP-RESTORE-TESTS.md`: first restore test, then
       schedule quarterly.
 - [ ] `docs/DISK-HEALTH.md`: scrubs, SMART, zed alerts.

@@ -9,8 +9,8 @@ pbs01 is a single point of failure with two weak spots this runbook closes:
    filesystem. A dead OS disk takes it with it. Fixed with
    `scripts/pbs_config_backup.sh`.
 
-`<store>` below is your datastore name (whatever you passed to
-`post-deploy/create_pbs_datastore.sh`).
+Examples below use the real datastore names from `docs/PBS-STORAGE.md`
+(`vm-ssd`, `bulk`, `scratch`).
 
 ## Verify jobs
 
@@ -25,8 +25,10 @@ re-verifying anything whose last verification is older than 30 days.
 ```bash
 # Run on pbs01. Command syntax verified against the official PBS docs
 # (pbs.proxmox.com/docs/proxmox-backup-manager).
-proxmox-backup-manager verify-job create verify-main \
-  --store main \
+# Shown for vm-ssd; repeat per datastore on the schedule in the
+# per-datastore table under "Prune jobs (retention)".
+proxmox-backup-manager verify-job create verify-vm-ssd \
+  --store vm-ssd \
   --schedule "sat 03:00" \
   --ignore-verified true \
   --outdated-after 30 \
@@ -44,7 +46,7 @@ right after every chunk upload, catching transmission errors before the
 backup job even finishes:
 
 ```bash
-proxmox-backup-manager datastore update main --verify-new true
+proxmox-backup-manager datastore update vm-ssd --verify-new true
 ```
 
 Verify failures appear in the PBS task log (`Administration → Tasks`).
@@ -55,29 +57,47 @@ untrustworthy until a fresh backup replaces them.
 
 Prune decides which snapshots to *keep*. It only removes index entries —
 disk space is not freed until garbage collection runs (next section).
-
-```bash
-# Thinning ladder: dense recent, sparse historical. Overlapping keep-*
-# rules union — a snapshot kept by any rule survives.
-proxmox-backup-manager prune-job create prune-main \
-  --store main \
-  --schedule "daily" \
-  --keep-last 3 \
-  --keep-daily 7 \
-  --keep-weekly 4 \
-  --keep-monthly 6
-```
+Thinning ladder: dense recent, sparse historical. Overlapping keep-*
+rules union — a snapshot kept by any rule survives.
 
 UI path: Datastore → Prune & GC → Prune Jobs → Add.
 
-**Retention authority: pick one.** PVE backup jobs have their own
-`keep-*` retention settings, and PBS prune jobs have theirs. Running both
+**Retention authority: PBS prune jobs. Decided.** PVE backup jobs have their
+own `keep-*` retention settings, and PBS prune jobs have theirs. Running both
 with different policies is the classic way to discover — during an
 incident — that the snapshot you wanted was pruned by the other side.
-Recommendation: manage retention in **PBS prune jobs** and leave the PVE
-backup job retention policy at keep-all (or document explicitly that the
-PVE side is the authority). Whichever you choose, write it down next to
-the job definition.
+The rule in this repo: **PBS prune jobs own retention; every PVE backup job
+runs at `keep-all`** (see `docs/BACKUP-JOBS.md` and
+`post-deploy/configure_backup_jobs.sh`, whose default is `keep-all`).
+Never set `keep-*` retention on the PVE side.
+
+## Per-datastore schedules
+
+One prune job and one verify job per datastore (datastores are cheap;
+per-datastore schedules keep the critical tier on SSD fast and the bulk
+tier out of the way). Retention values match `docs/PBS-STORAGE.md`.
+
+| Datastore | Prune job | Verify job | GC |
+|---|---|---|---|
+| `vm-ssd` | daily 21:30 — `keep-daily=7,keep-weekly=4,keep-monthly=6` | weekly `sat 03:00`, re-verify stale > 30 days | `sun 04:00` |
+| `bulk` | daily 21:45 — `keep-weekly=4,keep-monthly=6` | monthly `sun 03:00`, re-verify stale > 30 days | `sun 05:00` |
+| `scratch` | daily 22:00 — `keep-daily=3` | monthly `sun 03:30`, re-verify stale > 30 days | `sun 05:30` |
+
+```bash
+# Example for vm-ssd; repeat per datastore with the schedule above.
+proxmox-backup-manager prune-job create prune-vm-ssd \
+  --store vm-ssd --schedule "21:30" \
+  --keep-daily 7 --keep-weekly 4 --keep-monthly 6
+proxmox-backup-manager verify-job create verify-vm-ssd \
+  --store vm-ssd --schedule "sat 03:00" \
+  --ignore-verified true --outdated-after 30
+proxmox-backup-manager datastore update vm-ssd --verify-new true
+```
+
+Ordering that still matters: **backup → prune → GC → verify**. Prune without GC
+frees nothing; verify before prune wastes effort re-checking snapshots
+you are about to drop. GC is I/O heavy; keep it out of the backup window
+(02:00–04:00) and off the verify slots.
 
 ## Garbage collection
 
@@ -87,31 +107,16 @@ can't have its chunks pulled out from under it — do not try to work
 around it).
 
 ```bash
-# Weekly GC, scheduled AFTER the prune job and OUTSIDE the backup window.
-# GC is I/O heavy; do not overlap it with backups or verify jobs.
-proxmox-backup-manager datastore update main --gc-schedule "sun 04:00"
+# Per-datastore GC, scheduled AFTER that datastore's prune job and OUTSIDE
+# the backup window. GC is I/O heavy; do not overlap it with backups or
+# verify jobs.
+proxmox-backup-manager datastore update vm-ssd --gc-schedule "sun 04:00"
 ```
 
 (Or set `--gc-schedule` at creation time:
-`proxmox-backup-manager datastore create main /mnt/datastore --gc-schedule "sun 04:00"`.)
+`proxmox-backup-manager datastore create vm-ssd /fast/vm-ssd --gc-schedule "sun 04:00"`.)
 
 UI path: Datastore → Prune & GC → set the GC schedule.
-
-Ordering that matters: **backup → prune → GC → verify**. Prune without GC
-frees nothing; verify before prune wastes effort re-checking snapshots
-you are about to drop.
-
-## Suggested weekly timetable
-
-| When | What |
-|---|---|
-| Nightly (PVE backup jobs) | Backups land on PBS |
-| Daily 21:30 | Prune job |
-| Sunday 04:00 | Garbage collection |
-| Saturday 03:00 | Verify job (re-verifies anything stale > 30 days) |
-
-Keep all four out of each other's way and out of the nightly backup
-window.
 
 ## Config backup: what must be captured
 
@@ -131,10 +136,42 @@ Two things the script deliberately notes but **cannot** back up from pbs01:
 
 - **Client-side encryption keys** live on the PVE nodes
   (`/etc/pve/priv/storage/*.enc`), not on PBS. Without the key, encrypted
-  backups are unrecoverable. Keep a copy in your password manager / offline
-  vault — this is the single most loss-sensitive item in the whole setup.
+  backups are unrecoverable. This is the single most loss-sensitive item in
+  the whole setup — the procedure below is mandatory, not optional.
 - **The datastore data itself** — that is what verify/prune/GC and the
   offsite story protect, not this script.
+
+## Backup encryption keys: export, store, and prove recovery
+
+Do this once when encryption is first enabled, again whenever a key
+changes, and re-verify annually. Untested key backups are not backups.
+
+1. **Export.** On any PVE node, copy each key out of the cluster filesystem:
+   ```bash
+   # one .enc file per PBS storage that uses client-side encryption
+   ls /etc/pve/priv/storage/
+   cp /etc/pve/priv/storage/<store>.enc /root/pbs-<store>.enc
+   ```
+   Copy the file off the node (USB stick, password manager file attachment —
+   never email, never chat).
+2. **Store in two independent locations.** Minimum: (a) password manager
+   attachment, (b) offline copy (encrypted USB in a different building, or
+   printed as base64 in a sealed envelope). The offsite PBS location counts
+   as one of the two once `docs/OFFSITE-PBS.md` is deployed — until then it
+   does not exist, so use two you control today.
+3. **Set up a PBS master key.** PBS supports a master key that can recover
+   backup encryption keys. Create one, store it with the same two-location
+   rule, and record that it exists in `docs/DISASTER-RECOVERY.md` Phase 7.
+4. **Prove it works — annually.** Restore one encrypted backup using *only*
+   the saved key file (not the live `/etc/pve/priv` copy):
+   ```bash
+   # on a scratch PVE node or a test VM with the PBS storage registered:
+   # temporarily move the live key aside, place ONLY the saved copy,
+   # and restore a small guest. If the restore succeeds, the saved key
+   # is good. Restore the live key immediately afterward.
+   ```
+   Log the date and result next to the Phase 7 checklist. A key that has
+   never restored anything is a hope, not a recovery path.
 
 Install the script at `/usr/local/sbin/pbs_config_backup.sh` on pbs01 and
 let `--mode apply` install its own cron line (`/etc/cron.d/pbs-config-backup`,

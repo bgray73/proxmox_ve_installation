@@ -9,11 +9,11 @@ On the switches, trunk VLAN IDs are only locally significant per link, so VLAN 4
 Networks (Settings → Networks)
 VLAN	Name	Subnet	Gateway IP	DHCP	Internet	Notes
 10	OOB_IDRAC_BMC	10.10.10.0/24	10.10.10.1	Off (static iDRACs)	Off	matches 2960-X ip default-gateway 10.10.10.1
-20	PVE_MGMT	10.10.20.0/24	10.10.20.1	On or static	Off	separate instance per switch — not L2-shared
+20	PVE_MGMT	10.10.20.0/24	10.10.20.1	On or static	Off	shared L2 domain across both switches — UniFi Networks are keyed by VLAN ID globally, so per-switch "separate" instances are not possible (same reason VLAN 40 was renumbered to 41)
 # 21	COROSYNC_A — INTENTIONALLY NOT CREATED. Corosync is pure L2 on the Nexus
 #     (no gateway, no SVI, not trunked to this gateway). Isolation is by design,
 #     not by firewall rule. Addressing plan reserves 10.10.21.0/24 if ever needed.
-30	PBS_MGMT	10.10.30.0/24	10.10.30.1	On or static	Off	
+30	PBS_MGMT	10.10.30.0/24	10.10.30.1	On or static	Off	shared L2 domain across both switches (same as VLAN 20)
 31	PBS_BACKUP_40G	10.10.31.0/24	10.10.31.1	Off	Off	
 40	INFRA_TAILSCALE	10.10.40.0/24	10.10.40.1	Off	On	UPS/PDU/Tailscale subnet routers
 41	INFRA_SERVICES	10.10.41.0/24	10.10.41.1	On	as needed	renumbered from Nexus's VLAN 40

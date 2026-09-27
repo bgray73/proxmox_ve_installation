@@ -4,8 +4,10 @@
 # only in /etc/pve/jobs.cfg, where a rebuild would lose them.
 #
 # Default policy (see docs/BACKUP-JOBS.md):
-#   one nightly job, all guests on all nodes, snapshot mode, zstd,
-#   keep-daily=7 + keep-weekly=4, failures reported (mailnotification=failure).
+#   two nightly jobs (nightly-prod -> vm-ssd datastore, nightly-scratch ->
+#   scratch datastore), snapshot mode, zstd, keep-all on the PVE side
+#   (PBS prune jobs are the retention authority), failures reported
+#   (mailnotification=failure).
 #
 # Run on any PVE node (jobs are cluster-wide in /etc/pve/jobs.cfg).
 set -euo pipefail
@@ -25,11 +27,16 @@ Options:
   --schedule SPEC       systemd calendar schedule (default: 02:00 daily;
                         or env SCHEDULE)
   --prune SPEC          retention, e.g. keep-daily=7,keep-weekly=4
-                        (default; or env PRUNE)
+                        (default: keep-all — PBS prune jobs are the
+                        retention authority, see docs/PBS-MAINTENANCE.md;
+                        or env PRUNE)
   --mode MODE           snapshot|suspend|stop (default: snapshot; or env MODE)
   --compress ALG        zstd|lzo|gzip|none (default: zstd; or env COMPRESS)
   --vmids IDS           comma-separated VMIDs to back up instead of --all
                         (or env VMIDS)
+  --pool NAME           back up all guests in the named PVE pool instead of
+                        --all (or env POOL); use with per-datastore jobs,
+                        e.g. --pool prod --pbs-storage pbs-vm-ssd
   --exclude IDS         comma-separated VMIDs to skip (or env EXCLUDE)
   --node NAME           restrict the job to one node (default: all nodes;
                         or env NODE)
@@ -47,10 +54,11 @@ EOF
 JOB_ID="${JOB_ID:-nightly-all}"
 PBS_STORAGE="${PBS_STORAGE:-}"
 SCHEDULE="${SCHEDULE:-02:00}"
-PRUNE="${PRUNE:-keep-daily=7,keep-weekly=4}"
+PRUNE="${PRUNE:-keep-all}"
 MODE="${MODE:-snapshot}"
 COMPRESS="${COMPRESS:-zstd}"
 VMIDS="${VMIDS:-}"
+POOL="${POOL:-}"
 EXCLUDE="${EXCLUDE:-}"
 NODE="${NODE:-}"
 COMMENT="${COMMENT:-Nightly backup of all guests to PBS (managed by post-deploy/configure_backup_jobs.sh)}"
@@ -66,6 +74,7 @@ while [[ $# -gt 0 ]]; do
     --mode) MODE="${2:?}"; shift 2 ;;
     --compress) COMPRESS="${2:?}"; shift 2 ;;
     --vmids) VMIDS="${2:?}"; shift 2 ;;
+    --pool) POOL="${2:?}"; shift 2 ;;
     --exclude) EXCLUDE="${2:?}"; shift 2 ;;
     --node) NODE="${2:?}"; shift 2 ;;
     --comment) COMMENT="${2:?}"; shift 2 ;;
@@ -107,15 +116,18 @@ resolve_pbs_storage
 log "Backup job id: $JOB_ID"
 log "PBS storage: $PBS_STORAGE"
 
-# Selection: --all unless explicit VMIDs are given.
+# Selection: --all unless explicit VMIDs or a pool are given.
 ALL=1
-if [[ -n "$VMIDS" ]]; then ALL=0; fi
+if [[ -n "$VMIDS" || -n "$POOL" ]]; then ALL=0; fi
+if [[ -n "$VMIDS" && -n "$POOL" ]]; then
+  fail "--vmids and --pool are mutually exclusive"
+fi
 
 # Desired job definition, compared field-by-field against the cluster state.
 # Built via environment variables to avoid shell-quoting pitfalls with
 # comments containing spaces or special characters.
 DESIRED_JSON="$(JOB_ID="$JOB_ID" PBS_STORAGE="$PBS_STORAGE" SCHEDULE="$SCHEDULE" \
-  MODE="$MODE" COMPRESS="$COMPRESS" ALL="$ALL" VMIDS="$VMIDS" EXCLUDE="$EXCLUDE" \
+  MODE="$MODE" COMPRESS="$COMPRESS" ALL="$ALL" VMIDS="$VMIDS" POOL="$POOL" EXCLUDE="$EXCLUDE" \
   NODE="$NODE" PRUNE="$PRUNE" COMMENT="$COMMENT" python3 -c '
 import json, os
 e = os.environ
@@ -127,6 +139,7 @@ print(json.dumps({
   "compress": e["COMPRESS"],
   "all": e["ALL"],
   "vmid": e["VMIDS"],
+  "pool": e["POOL"],
   "exclude": e["EXCLUDE"],
   "node": e["NODE"],
   "prune-backups": e["PRUNE"],
@@ -139,7 +152,7 @@ PLAN="$(pvesh get /cluster/backup --output-format json 2>/dev/null \
 import json, sys
 desired = json.loads(sys.argv[1])
 COMPARE = ["storage", "schedule", "mode", "compress", "all", "vmid",
-           "exclude", "node", "prune-backups", "enabled",
+           "pool", "exclude", "node", "prune-backups", "enabled",
            "mailnotification", "comment"]
 
 def norm(job, key):

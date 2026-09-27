@@ -152,6 +152,14 @@ the cluster, it does not exist. Review this list quarterly.
 - [ ] Proxmox TOTP recovery keys (break-glass for 2FA — see docs/SECURITY.md).
 - [ ] PBS API token + secret and the **PBS fingerprint** (needed to re-add
       the storage in Phase 5).
+- [ ] Backup encryption keys: copies of `/etc/pve/priv/storage/*.enc` in
+      **two independent locations**, plus the PBS master key. Procedure and
+      annual recovery test: `docs/PBS-MAINTENANCE.md`. Without these,
+      encrypted backups are unrecoverable — treat as blocking.
+- [ ] Offsite copy access: location, Tailscale identity/admin credentials,
+      and sync schedule per `docs/OFFSITE-PBS.md` (once deployed).
+- [ ] PBS config archive available offsite (small tarball from
+      `scripts/pbs_config_backup.sh`).
 - [ ] Copy of `.env` (the `ANSWER_TOKEN`) — gitignored, not on GitHub.
 - [ ] This repo — GitHub counts, plus a local clone somewhere off-cluster.
 - [ ] Built ISOs in `output/` — or the ability to rebuild them (`make isos`).
