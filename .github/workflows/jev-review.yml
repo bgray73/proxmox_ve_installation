@@ -1,0 +1,92 @@
+name: Jev advisory review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: jev-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      # Security boundary: use only the trusted default-branch implementation.
+      # The pull request is downloaded as a diff and treated strictly as data.
+      - name: Check out trusted guard
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Download pull-request diff as data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" \
+            -H "Accept: application/vnd.github.v3.diff" \
+            > "${RUNNER_TEMP}/pull-request.diff"
+
+      - name: Run advisory Jev review
+        id: jev
+        continue-on-error: true
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: |
+          python3 automation/jev/guard.py \
+            --diff-file "${RUNNER_TEMP}/pull-request.diff" \
+            --output "${RUNNER_TEMP}/jev-report.md" \
+            --json-output "${RUNNER_TEMP}/jev-result.json"
+
+      - name: Add report to workflow summary
+        if: always()
+        run: |
+          if test -f "${RUNNER_TEMP}/jev-report.md"; then
+            cat "${RUNNER_TEMP}/jev-report.md" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "Jev advisory review did not produce a report." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Create or update pull-request comment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          REPORT_PATH: ${{ runner.temp }}/jev-report.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- jev-proxmox-guard -->';
+            const body = fs.existsSync(process.env.REPORT_PATH)
+              ? fs.readFileSync(process.env.REPORT_PATH, 'utf8')
+              : `${marker}\n## Jev advisory review\n\nReview did not produce a report; inspect the workflow log.`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100
+            });
+            const previous = comments.find(comment =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: previous.id, body
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Upload machine-readable result
+        if: always() && steps.jev.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jev-review-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/jev-result.json
+          if-no-files-found: ignore
+          retention-days: 14
