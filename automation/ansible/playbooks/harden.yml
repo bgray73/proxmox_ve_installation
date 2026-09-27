@@ -5,7 +5,7 @@
 #   python3 scripts/gen_inventory.py > inventory.json
 #   ansible-playbook -i inventory.json playbooks/harden.yml
 #
-# Uses only ansible.builtin modules (no collection dependencies).
+# Requires the ansible.posix collection listed in ../requirements.yml.
 - name: Harden Proxmox hosts
   hosts: proxmox_ve:proxmox_bs
   become: true
@@ -51,7 +51,7 @@
         state: started
 
     - name: Install admin SSH keys for root
-      ansible.builtin.authorized_key:
+      ansible.posix.authorized_key:
         user: root
         key: "{{ item }}"
         state: present

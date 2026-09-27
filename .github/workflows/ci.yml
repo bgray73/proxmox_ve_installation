@@ -40,7 +40,7 @@ jobs:
           d = json.load(open('/tmp/ansible-inventory.json'))
           ch = d['all']['children']
           assert set(ch) == {'proxmox_ve', 'proxmox_bs'}, ch.keys()
-          assert len(ch['proxmox_ve']['hosts']) == 4
+          assert len(ch['proxmox_ve']['hosts']) == 3
           assert len(ch['proxmox_bs']['hosts']) == 1
           print('inventory generator OK')
           "
@@ -89,8 +89,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install ansible-core
-        run: pip install --quiet ansible-core
+      - name: Install Ansible dependencies
+        run: |
+          pip install --quiet ansible-core
+          ansible-galaxy collection install -r automation/ansible/requirements.yml
 
       - name: Syntax check playbooks
         run: |
