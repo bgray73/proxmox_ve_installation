@@ -1,1 +1,3 @@
----\ncollections:\n  - name: ansible.posix\n
+---
+collections:
+  - name: ansible.posix
