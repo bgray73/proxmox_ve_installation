@@ -40,7 +40,7 @@ jobs:
           d = json.load(open('/tmp/ansible-inventory.json'))
           ch = d['all']['children']
           assert set(ch) == {'proxmox_ve', 'proxmox_bs'}, ch.keys()
-          assert len(ch['proxmox_ve']['hosts']) == 4
+          assert len(ch['proxmox_ve']['hosts']) == 3
           assert len(ch['proxmox_bs']['hosts']) == 1
           print('inventory generator OK')
           "
