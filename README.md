@@ -108,12 +108,12 @@ docs/UPDATES.md                     Node-by-node patching runbook
 docs/SECURITY.md                    TOTP 2FA, SSH key-only, unattended security updates
 docs/DEADMAN-SWITCH.md              Healthchecks.io offsite dead-man's switch runbook
 docs/RACK-LAYOUT.md                Planned Dell 42U rack elevation and power
-docs/SCANOPY.md                    Scanopy VM install and live discovery runbook
+docs/SCANOPY.md                    Scanopy VM install and live discovery runbook\ndocs/JEV.md                        Optional Jev advisory PR risk-review runbook
 inventory.example.json              Four-host sanitized template
 secrets.env.example                 Secret/environment template
 templates/                          Optional post-install guest templates (cloud-init)
 agents/                             Optional LabOps demo agents (A2A)
-automation/                         Post-deploy automation (Terraform fleet + Ansible ops)
+automation/                         Post-deploy automation (Terraform fleet + Ansible ops)\nautomation/jev/                     Optional redacted Jev pull-request risk guard
 ```
 
 Optional post-install material (not required for ISO install):
