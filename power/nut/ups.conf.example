@@ -1,0 +1,11 @@
+[ups-a]
+    driver = usbhid-ups
+    port = auto
+    serial = "<SERIAL-A>"
+    desc = "CyberPower OR1500LCDRTXL2U feed A"
+
+[ups-b]
+    driver = usbhid-ups
+    port = auto
+    serial = "<SERIAL-B>"
+    desc = "CyberPower OR1500LCDRTXL2U feed B"

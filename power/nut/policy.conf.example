@@ -1,0 +1,7 @@
+UPS_A=ups-a@<PVE01-LAN-IP>
+UPS_B=ups-b@<PVE01-LAN-IP>
+DELAY=240
+COMM_DELAY=60
+POLL=5
+# Set to 60 on pve01 only; applies to early timer, never critical battery.
+STAGGER=0
