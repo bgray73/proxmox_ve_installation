@@ -1,0 +1,14 @@
+[Unit]
+Description=Dual UPS outage and communication-loss policy
+After=network-online.target nut-monitor.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/nut-policy.sh
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

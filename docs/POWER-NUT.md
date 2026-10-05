@@ -1,227 +1,146 @@
-# NUT-based graceful shutdown on power loss
+# Dual CyberPower UPS graceful Proxmox shutdown
 
-One UPS, four physical machines, no graceful degradation without monitoring. NUT
-(Network UPS Tools) watches the UPS and shuts everything down in the right
-order when the battery runs out. Debian 13 (and Proxmox VE) ship NUT 2.8.1,
-which uses `primary`/`secondary` terminology (older guides say master/slave).
+Reviewable config pack for two CyberPower OR1500LCDRTXL2U units, three PVE
+nodes (pve01/pve02 R640, pve03 R440), and the Supermicro PBS host pbs01.
+Repository changes do not install anything or operate the rack.
 
-## Topology
+## Topology and prerequisites
 
-- **NUT server on `pbs01`** (Supermicro PBS node). The UPS USB cable plugs
-  into pbs01; it runs the driver (`usbhid-ups`), `upsd`, and `upsmon` in
-  `primary` mode.
-- **NUT clients on `pve01`–`pve03`**. Each runs `upsmon` in `secondary` mode
-  against `pbs01`.
+Both USB cables connect to pve01, which runs two usbhid-ups drivers, upsd,
+and primary upsmon. pve02, pve03, and pbs01 run secondary upsmon.
+Every host also runs the supplied root policy service for early outage
+shutdown and loss of monitoring. Network switches and the management path
+must remain battery powered throughout shutdown.
 
-Why the PBS node and not a PVE node: the NUT server must stay alive until
-*last* so it can keep signaling clients. pbs01 runs no guests, so its
-shutdown is trivial and it can be sequenced last with no guest-stop delay.
-Putting `upsd` on a PVE node would require "shut down last" choreography on
-a host that is simultaneously stopping VMs — more moving parts, more failure
-modes. If the UPS USB cable cannot physically reach pbs01, put the server
-wherever the cable lands and adjust the addresses below.
+Each protected dual-PSU server has PSU A on UPS A and PSU B on UPS B.
+Verify this physically, including PBS, and verify either UPS can sustain the
+full failover load. For a single-fed PBS, monitor only its actual supply and
+adapt the policy before installation; a single-fed host CAN be protected by NUT,
+but a dual-feed rule would be wrong for it.
 
-NUT traffic: TCP 3493 from the PVE management network to pbs01. Allow it in
-your firewall policy (Proxmox datacenter firewall and/or UCG rules).
+pve01 is a monitoring single point of failure. An independent NUT appliance is
+a later improvement. A fixed stagger does not guarantee that other hosts finish
+first. Measure guest and host shutdown durations and reserve sufficient runtime.
 
-## Install
+## Corrections to the supplied draft
 
-```bash
-# pbs01 (server)
-apt update && apt install -y nut-server nut-client
+- MINSUPPLIES 1 means at least one usable power supply, including healthy battery
+  power. It does not trigger SHUTDOWNCMD merely because both UPS units show OB.
+- The independent policy starts a 240-second window only while both feeds show OB.
+  Either OL resets it. One OB and one OL does not initiate shutdown.
+- Both OB plus either LB requests immediate native shutdown. Native upsmon also
+  retains its critical-power/FSD shutdown path.
+- Never wait 240 seconds or abort inside SHUTDOWNCMD: once NUT commits to forced
+  shutdown, returning from a custom script does not undo that state.
+- Unknown/stale/offline states without a confirmed OL feed trigger after a
+  separate 60-second grace; one brief query failure is not immediate shutdown.
+  This intentionally sacrifices availability during prolonged monitoring loss.
+- Primary and secondary credentials are separate. Use primary/secondary names.
+- Proxmox's native host shutdown handles guests and configured shutdown ordering.
+  Manual concurrent qm/pct loops bypass ordering and can conflict with HA.
+- upssched passes its action as argument 1 and UPSNAME/NOTIFYTYPE in the environment.
+  The draft ntfy script incorrectly expects two positional arguments.
+- upsmon -c fsd on the primary can shut down ALL monitored hosts, not just itself.
+- POWERDOWNFLAG can activate distribution shutdown hooks and UPS output cutoff.
+  It is omitted here; inspect the installed package hooks before enabling killpower.
+  Automatic UPS restart behavior is hardware/config dependent, not guaranteed.
 
-# pve01..pve03 (clients)
-apt update && apt install -y nut-client
-```
+## Files
 
-Debian ships everything disabled: nothing runs until `/etc/nut/nut.conf`
-sets a mode.
+Templates and the policy service are in [power/nut](../power/nut/).
+No real addresses, serial numbers, or passwords are committed.
 
-## Discover the driver
+| Setting | Default | Purpose |
+|---|---:|---|
+| MINSUPPLIES | 1 | Native NUT redundant supply requirement |
+| DELAY | 240 s | Both feeds continuously on battery |
+| COMM_DELAY | 60 s | No confirmed mains feed with missing/degraded data |
+| POLL | 5 s | Policy poll interval; queries have 4-second timeouts |
+| STAGGER | 0 s | Set 60 on pve01 for early outage only |
+| Low battery | OB on both, LB on either | Bypass early delay and stagger |
 
-```bash
-# on pbs01, with the UPS USB cable connected
-nut-scanner -U
-```
+Timers are approximate and include polling/query latency. A policy service restart
+resets its timers; native upsmon remains a separate critical-power backstop.
 
-Most USB UPSes use `usbhid-ups`. The driver varies by model — use whatever
-`nut-scanner` reports, and pin `serial` (also reported) so the config
-survives USB re-enumeration.
+## Manual installation runbook
 
-## Config — pbs01 (server)
+Do not enable the policy until wiring, HA behavior, guest shutdown, and measured
+runtime have been reviewed. These commands are for the operator to run manually.
 
-`/etc/nut/nut.conf`:
-```
-MODE=netserver
-```
+1. On pve01 install nut-server and nut-client; on the others install nut-client.
+   Run apt update first. Confirm installed NUT version and service names with
+   systemctl list-unit-files 'nut*'.
+2. On pve01 run nut-scanner -U. Verify both units and unique USB serial strings.
+   If serials are absent/identical, identify a supported stable USB-port match
+   for the installed driver version before proceeding.
+3. Copy ups.conf.example, upsd.conf.example, and upsd.users.example to the
+   corresponding /etc/nut paths on pve01. Replace every placeholder.
+   Generate separate primary and secondary passwords with openssl rand -base64 24.
+4. Set MODE=netserver in /etc/nut/nut.conf on pve01, MODE=netclient on clients.
+   Copy the primary upsmon template on pve01 and secondary template on clients.
+   Secure password-bearing configs root:nut, mode 0640.
+5. Allow TCP 3493 only from pve02, pve03, and pbs01 to pve01 through the relevant
+   host/inter-VLAN firewalls. Keep credentials and real configuration outside Git.
+6. Install nut-policy.sh as /usr/local/sbin/nut-policy.sh, root:root mode 0755,
+   policy.conf.example as /etc/nut/policy.conf, root:root mode 0600, and the service
+   as /etc/systemd/system/nut-policy.service on every host. Fill UPS addresses
+   and set STAGGER=60 only on pve01.
+7. On pve01 start the packaged USB driver services and nut-server. Driver unit
+   names vary by NUT package; inspect them rather than assuming nut-server
+   launches drivers. Verify upsc ups-a@localhost ups.status and ups-b both show OL.
+   Start nut-monitor on all four nodes and verify remote upsc queries.
+8. Check the Proxmox guest shutdown order/timeouts and guest ACPI/agent behavior.
+   If HA is enabled, review the installed-version HA shutdown policy so shutdown
+   does not migrate/restart guests onto nodes also powering down. Do not blindly
+   disable HA resources using a commented shell loop.
+9. Run /usr/local/sbin/nut-policy.sh --dry-run on every node. This makes read-only
+   queries and prints one snapshot without modifying guests or powering off.
+   It is not an end-to-end shutdown test.
+10. Only after review, systemctl daemon-reload and
+    systemctl enable --now nut-policy.service. Watch
+    journalctl -u nut-policy -u nut-monitor -f.
 
-`/etc/nut/ups.conf`:
-```
-pollinterval = 2
-maxretry = 3
+PBS uses native host shutdown so normal service teardown/filesystem unmounting
+occurs. This pack does not coordinate completion of PBS backup/verify/GC tasks,
+nor guarantee PBS goes last. Stop scheduled jobs before planned testing.
 
-[ups1]
-    driver = usbhid-ups
-    port = auto
-    desc = "Rack UPS"
-    # serial = "XXXXXXXXXXXX"   # pin to this exact unit; from nut-scanner -U
-```
+## Test sequence
 
-`/etc/nut/upsd.conf`:
-```
-LISTEN 0.0.0.0 3493
-```
-(Restrict with firewall rules rather than a second LISTEN line.)
+Use simulated UPS data first for OL/OL, OB/OL, OB/OB, OB+LB/OB, restoration,
+and loss of communications. Validate before attempting a live power-loss test.
 
-`/etc/nut/upsd.users` (keep the shipped restrictive permissions; never commit):
-```
-[upsmon-primary]
-    password = CHANGE_ME_NUT_PRIMARY
-    upsmon primary
+During a maintenance window with console access and expendable guests:
+- Disconnect one UPS MAINS input briefly; leave its USB/data connection intact.
+  Expect ONBATT then ONLINE and no automatic shutdown with the other feed OL.
+- A USB/network disconnect produces communication loss, not ONBATT.
+- A both-mains test exceeding DELAY really shuts hosts down. pve01 gets an
+  additional early-only stagger; critical battery may override that order.
+- Never use upsmon -c fsd as a harmless notification test. On pve01 it may shut
+  down the entire group. After an FSD test, clear latched FSD by restarting upsd
+  when safe and check for leftover killpower flags from any pre-existing config.
 
-[upsmon-secondary]
-    password = CHANGE_ME_NUT_SECONDARY
-    upsmon secondary
-```
+Measure total guest/host shutdown time at actual load. Do not rely on the UPS LB
+threshold leaving enough runtime for every guest. Adjust DELAY down if necessary.
+Native graceful shutdown can still force-stop guests that exceed configured
+timeouts; validate application recovery.
 
-`/etc/nut/upsmon.conf`:
-```
-RUN_AS_USER nut
-MONITOR ups1@localhost 1 upsmon-primary CHANGE_ME_NUT_PRIMARY primary
-MINSUPPLIES 1
-SHUTDOWNCMD "/sbin/shutdown -h +0"
-NOTIFYCMD /usr/sbin/upssched
-POLLFREQ 5
-POLLFREQALERT 5
-HOSTSYNC 15
-DEADTIME 15
-POWERDOWNFLAG /run/nut/killpower
-RBWARNTIME 43200
-NOCOMMWARNTIME 300
-FINALDELAY 5
-NOTIFYFLAG ONLINE   SYSLOG+WALL
-NOTIFYFLAG ONBATT   SYSLOG+WALL+EXEC
-NOTIFYFLAG LOWBATT  SYSLOG+WALL+EXEC
-NOTIFYFLAG FSD      SYSLOG+WALL+EXEC
-NOTIFYFLAG COMMOK   SYSLOG+WALL+EXEC
-NOTIFYFLAG COMMBAD  SYSLOG+WALL+EXEC
-NOTIFYFLAG SHUTDOWN SYSLOG+WALL+EXEC
-NOTIFYFLAG REPLBATT SYSLOG+WALL
-NOTIFYFLAG NOCOMM   SYSLOG+WALL+EXEC
-NOTIFYFLAG NOPARENT SYSLOG+WALL
-```
+## Notifications and recovery
 
-`/etc/nut/upssched.conf` — the timer that turns "on battery too long" into a
-shutdown (cancels itself if mains returns):
-```
-CMDSCRIPT /etc/nut/upssched-cmd.sh
-PIPEFN /etc/nut/upssched.pipe
-LOCKFN /etc/nut/upssched.lock
-AT ONBATT * START-TIMER early-shutdown 300
-AT ONLINE * CANCEL-TIMER early-shutdown
-AT LOWBATT * EXECUTE lowbatt-shutdown
-AT COMMBAD * START-TIMER commbad-timer 300
-AT COMMOK * CANCEL-TIMER commbad-timer
-AT NOCOMM * EXECUTE commbad-shutdown
-AT SHUTDOWN * EXECUTE powerdown-note
-```
+NUT events are logged to the journal. Optional ntfy integration should use the
+existing notifications runbook; any upssched hook must use its action argument and
+UPSNAME/NOTIFYTYPE environment variables, with bounded curl timeouts and protected
+topic credentials. No push endpoint is enabled by this pack.
 
-`/etc/nut/upssched-cmd.sh` (`chmod +x`):
-```sh
-#!/bin/sh
-case "$1" in
-    early-shutdown)
-        logger -t upssched "UPS on battery 5 min, forcing shutdown"
-        /usr/sbin/upsmon -c fsd
-        ;;
-    lowbatt-shutdown|commbad-shutdown)
-        logger -t upssched "UPS critical or comm lost, forcing shutdown"
-        /usr/sbin/upsmon -c fsd
-        ;;
-    powerdown-note)
-        logger -t upssched "shutdown proceeding"
-        ;;
-esac
-```
+Hosts shut down while UPS output may remain live. BIOS AC-recovery only helps
+after an actual AC loss/restore at the server input; it does not automatically
+restart a cleanly powered-off host with live input. Use iDRAC/IPMI/manual power-on
+until an independently tested UPS cutoff/restart workflow is added. Restore
+networking first, then pve01 for NUT, remaining hosts and PBS, then guests/jobs.
 
-Start and verify on pbs01:
-```bash
-systemctl enable --now nut-server
-upsc ups1@localhost          # must show ups.status: OL
-systemctl enable --now nut-monitor
-```
+## References
 
-## Config — pve01..pve03 (clients)
-
-`/etc/nut/nut.conf`:
-```
-MODE=netclient
-```
-
-`/etc/nut/upsmon.conf` (no upssched needed; the server drives FSD):
-```
-RUN_AS_USER nut
-MONITOR ups1@<pbs01-mgmt-ip> 1 upsmon-secondary CHANGE_ME_NUT_SECONDARY secondary
-MINSUPPLIES 1
-SHUTDOWNCMD "/sbin/shutdown -h +0"
-POLLFREQ 5
-POLLFREQALERT 5
-DEADTIME 15
-POWERDOWNFLAG /run/nut/killpower
-RBWARNTIME 43200
-NOCOMMWARNTIME 300
-FINALDELAY 5
-```
-
-```bash
-systemctl enable --now nut-monitor
-upsc ups1@<pbs01-mgmt-ip>     # verify reachability from each PVE node
-```
-
-## Behavior
-
-- **Brief blip** (mains back within 5 min): `upssched` starts the
-  `early-shutdown` timer on ONBATT and cancels it on ONLINE. Nothing shuts
-  down; the event is only logged.
-- **Extended outage**: the timer fires → `upsmon -c fsd` → FSD flag set.
-  Secondaries (PVE nodes) shut down first; the primary (pbs01) waits for them
-  (HOSTSYNC), then shuts itself down. With POWERDOWNFLAG set, the UPS is
-  commanded to cut output power after `ups.delay.shutdown`, so a mains return
-  power-cycles everything cleanly.
-- **Low battery**: LB flag → immediate FSD regardless of the timer.
-- **Lost UPS comms**: `commbad-timer` (5 min) → FSD. A dead USB cable must
-  not leave the cluster running blind into a blackout.
-- **Guests**: Proxmox stops running guests as part of host shutdown. Confirm
-  your guests actually finish shutting down inside the window during testing;
-  guests with long shutdowns are the usual surprise.
-
-## Safe testing
-
-Checklist order — each step is safe; stop when uncomfortable:
-
-- [ ] `upsc ups1@localhost` on pbs01 shows `ups.status: OL`.
-- [ ] `upsc ups1@<pbs01-ip>` works from each PVE node.
-- [ ] `systemctl status nut-server nut-monitor` clean on all four physical nodes.
-- [ ] `journalctl -u nut-monitor -f`, then briefly unplug the UPS *network*
-      cable (not mains): expect ONBATT → timer start → plug back → ONLINE →
-      timer cancel, no shutdown.
-- [ ] Full test in a maintenance window, non-critical guests stopped:
-      `sudo upsmon -c fsd` on pbs01. **This shuts down every node for real.**
-      Verify order (PVE nodes → pbs01 last) and that guests stopped cleanly.
-- [ ] After the test, confirm the UPS outlet power-cycle behaved as expected
-      (or disable the killpower path if you prefer the UPS to stay on).
-
-## Power-on order after a full outage
-
-1. **Switches first** (Nexus 9K, Catalyst 2960-X). Everything depends on the
-   network: Corosync needs the Nexus, and iDRAC/IPMI come up for remote
-   power-on of anything that didn't self-start.
-2. **PBS (pbs01)**. The NUT server is back early so power monitoring resumes,
-   and the backup datastore is reachable before any PVE backup job runs.
-3. **PVE nodes (pve01–pve03)**. Cluster forms, Corosync reaches quorum,
-   guests start in their configured order.
-
-Set AC power recovery to **On** (Dell iDRAC: "AC Power Recovery"; Supermicro
-BIOS: "Restore on AC Power Loss" → Power On) on all four physical nodes so they
-self-start when mains returns. Anything without that setting gets powered on
-via iDRAC/IPMI in the same 1→2→3 order.
+- https://networkupstools.org/docs/man/upsmon.conf.html
+- https://networkupstools.org/docs/man/upsmon.html
+- https://networkupstools.org/docs/man/upssched.conf.html
+- https://networkupstools.org/docs/man/usbhid-ups.html
+- https://pve.proxmox.com/pve-docs/chapter-ha-manager.html

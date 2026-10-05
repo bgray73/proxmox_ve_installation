@@ -1,0 +1,7 @@
+[monitor-primary]
+    password = "<PRIMARY-PASSWORD>"
+    upsmon primary
+
+[monitor-secondary]
+    password = "<SECONDARY-PASSWORD>"
+    upsmon secondary
