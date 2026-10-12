@@ -1,6 +1,6 @@
 RUN_AS_USER nut
-MONITOR ups-a@<PVE01-LAN-IP> 1 monitor-primary <PRIMARY-PASSWORD> primary
-MONITOR ups-b@<PVE01-LAN-IP> 1 monitor-primary <PRIMARY-PASSWORD> primary
+MONITOR ups-a@<NUT-SERVER-IP> 1 monitor-primary <PRIMARY-PASSWORD> primary
+MONITOR ups-b@<NUT-SERVER-IP> 1 monitor-primary <PRIMARY-PASSWORD> primary
 MINSUPPLIES 1
 SHUTDOWNCMD "/sbin/shutdown -h now"
 POLLFREQ 5

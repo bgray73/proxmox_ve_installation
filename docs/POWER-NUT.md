@@ -6,8 +6,9 @@ Repository changes do not install anything or operate the rack.
 
 ## Topology and prerequisites
 
-Both USB cables connect to pve01, which runs two usbhid-ups drivers, upsd,
-and primary upsmon. pve02, pve03, and pbs01 run secondary upsmon.
+Both USB cables connect to the Pi-hole Raspberry Pi, which runs two usbhid-ups
+drivers, upsd, and primary upsmon. pve01, pve02, pve03, and pbs01 run secondary
+upsmon.
 Every host also runs the supplied root policy service for early outage
 shutdown and loss of monitoring. Network switches and the management path
 must remain battery powered throughout shutdown.
@@ -18,8 +19,11 @@ full failover load. For a single-fed PBS, monitor only its actual supply and
 adapt the policy before installation; a single-fed host CAN be protected by NUT,
 but a dual-feed rule would be wrong for it.
 
-pve01 is a monitoring single point of failure. An independent NUT appliance is
-a later improvement. A fixed stagger does not guarantee that other hosts finish
+The Pi is the monitoring single point of failure: it must stay on UPS power for the
+duration of any event, and it shuts down last. It is single-corded, so loss of its
+UPS unit (not mere feed loss — the UPS battery carries feed loss) is
+indistinguishable from a full outage to the secondaries, which then shut down
+conservatively after the comms grace. A fixed stagger does not guarantee that other hosts finish
 first. Measure guest and host shutdown durations and reserve sufficient runtime.
 
 ## Corrections to the supplied draft
@@ -56,7 +60,7 @@ No real addresses, serial numbers, or passwords are committed.
 | DELAY | 240 s | Both feeds continuously on battery |
 | COMM_DELAY | 60 s | No confirmed mains feed with missing/degraded data |
 | POLL | 5 s | Policy poll interval; queries have 4-second timeouts |
-| STAGGER | 0 s | Set 60 on pve01 for early outage only |
+| STAGGER | 0 s | Set 300 on the Pi so the Proxmox nodes finish first; must fit inside measured battery runtime |
 | Low battery | OB on both, LB on either | Bypass early delay and stagger |
 
 Timers are approximate and include polling/query latency. A policy service restart
@@ -67,25 +71,27 @@ resets its timers; native upsmon remains a separate critical-power backstop.
 Do not enable the policy until wiring, HA behavior, guest shutdown, and measured
 runtime have been reviewed. These commands are for the operator to run manually.
 
-1. On pve01 install nut-server and nut-client; on the others install nut-client.
+1. On the Pi install nut, nut-server and nut-client; on the four Proxmox nodes
+   install nut and nut-client.
    Run apt update first. Confirm installed NUT version and service names with
    systemctl list-unit-files 'nut*'.
-2. On pve01 run nut-scanner -U. Verify both units and unique USB serial strings.
+2. On the Pi run nut-scanner -U. Verify both units and unique USB serial strings.
    If serials are absent/identical, identify a supported stable USB-port match
    for the installed driver version before proceeding.
 3. Copy ups.conf.example, upsd.conf.example, and upsd.users.example to the
-   corresponding /etc/nut paths on pve01. Replace every placeholder.
+   corresponding /etc/nut paths on the Pi. Replace every placeholder.
    Generate separate primary and secondary passwords with openssl rand -base64 24.
-4. Set MODE=netserver in /etc/nut/nut.conf on pve01, MODE=netclient on clients.
-   Copy the primary upsmon template on pve01 and secondary template on clients.
+4. Set MODE=netserver in /etc/nut/nut.conf on the Pi, MODE=netclient on the nodes.
+   Copy the primary upsmon template on the Pi and the secondary template on all
+   four Proxmox nodes.
    Secure password-bearing configs root:nut, mode 0640.
-5. Allow TCP 3493 only from pve02, pve03, and pbs01 to pve01 through the relevant
+5. Allow TCP 3493 only from pve01, pve02, pve03, and pbs01 to the Pi through the relevant
    host/inter-VLAN firewalls. Keep credentials and real configuration outside Git.
 6. Install nut-policy.sh as /usr/local/sbin/nut-policy.sh, root:root mode 0755,
    policy.conf.example as /etc/nut/policy.conf, root:root mode 0600, and the service
    as /etc/systemd/system/nut-policy.service on every host. Fill UPS addresses
-   and set STAGGER=60 only on pve01.
-7. On pve01 start the packaged USB driver services and nut-server. Driver unit
+   and set STAGGER=300 only on the Pi.
+7. On the Pi start the packaged USB driver services and nut-server. Driver unit
    names vary by NUT package; inspect them rather than assuming nut-server
    launches drivers. Verify upsc ups-a@localhost ups.status and ups-b both show OL.
    Start nut-monitor on all four nodes and verify remote upsc queries.
@@ -113,9 +119,9 @@ During a maintenance window with console access and expendable guests:
 - Disconnect one UPS MAINS input briefly; leave its USB/data connection intact.
   Expect ONBATT then ONLINE and no automatic shutdown with the other feed OL.
 - A USB/network disconnect produces communication loss, not ONBATT.
-- A both-mains test exceeding DELAY really shuts hosts down. pve01 gets an
-  additional early-only stagger; critical battery may override that order.
-- Never use upsmon -c fsd as a harmless notification test. On pve01 it may shut
+- A both-mains test exceeding DELAY really shuts hosts down. The Pi gets an
+  additional stagger so the Proxmox nodes finish first; critical battery may override that order.
+- Never use upsmon -c fsd as a harmless notification test. On the Pi it may shut
   down the entire group. After an FSD test, clear latched FSD by restarting upsd
   when safe and check for leftover killpower flags from any pre-existing config.
 
@@ -135,7 +141,7 @@ Hosts shut down while UPS output may remain live. BIOS AC-recovery only helps
 after an actual AC loss/restore at the server input; it does not automatically
 restart a cleanly powered-off host with live input. Use iDRAC/IPMI/manual power-on
 until an independently tested UPS cutoff/restart workflow is added. Restore
-networking first, then pve01 for NUT, remaining hosts and PBS, then guests/jobs.
+networking first, then the Pi for NUT, remaining hosts and PBS, then guests/jobs.
 
 ## References
 
