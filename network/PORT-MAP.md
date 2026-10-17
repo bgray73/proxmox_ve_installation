@@ -8,13 +8,13 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 
 | Port | Description | Mode | VLANs |
 |---|---|---|---|
-| E1/11 | PVE01 R640 primary data | trunk | 20,21,31,41,100; native 998 |
-| E1/12 | PVE02 R640 primary data | trunk | 20,21,31,41,100; native 998 |
-| E1/13 | PVE03 R440 primary data | trunk | 20,21,31,41,100; native 998 |
+| E1/11 | PVE01 R640 primary data | trunk | 20,21,31,41,100,110,120; native 998 |
+| E1/12 | PVE02 R640 primary data | trunk | 20,21,31,41,100,110,120; native 998 |
+| E1/13 | PVE03 R440 primary data | trunk | 20,21,31,41,100,110,120; native 998 |
 | E1/15 | PBS01 Supermicro primary data | trunk | 30,31; native 998 |
-| E1/21 | PVE01 10Gb failover | trunk | 20,21,31,41,100; native 998 |
-| E1/22 | PVE02 10Gb failover | trunk | 20,21,31,41,100; native 998 |
-| E1/23 | PVE03 10Gb failover | trunk | 20,21,31,41,100; native 998 |
+| E1/21 | PVE01 10Gb failover | trunk | 20,21,31,41,100,110,120; native 998 |
+| E1/22 | PVE02 10Gb failover | trunk | 20,21,31,41,100,110,120; native 998 |
+| E1/23 | PVE03 10Gb failover | trunk | 20,21,31,41,100,110,120; native 998 |
 | E1/48 | firewall/router uplink | trunk | 20,30,31,41,100,998 |
 
 > The exact Nexus interfaces used by the four 40Gb QSFP+ server links must be verified on the installed N9K-C9372TX before deployment. The table above is a logical placeholder map, not a claim that E1/11–15 are QSFP ports.
@@ -51,6 +51,8 @@ The 2960-X remains Layer 2 in this design. Its management SVI can live in VLAN 1
 | 40 | Tailscale subnet routers, UPS, PDU (2960-X OOB side) | 10.10.40.0/24 | service-specific policy |
 | 41 | Infrastructure services: DNS, reverse proxy, monitoring, automation, Docker host | 10.10.41.0/24 | service-specific policy; admin access via Tailscale |
 | 100 | Proxmox SDN / VXLAN transport underlay | site-defined | underlay transport; overlay VNets above it |
+| 110 | AI_LLM_LAB: AI models, inference, agents | 10.10.110.0/24 | UCG gateway 10.10.110.1 planned; deny management/backup by default |
+| 120 | APP_WORKLOADS: general LXC, Docker, VM applications | 10.10.120.0/24 | UCG gateway 10.10.120.1 planned; permit only needed service paths |
 | 998 | unused/native blackhole | none | no |
 
 ## Remote-management routing
@@ -84,3 +86,7 @@ Use the physical VLANs above as the underlay. Keep management, Corosync, and PBS
 4. Keep explicit allow-lists for VLAN 31 and default-deny inter-VLAN firewall policy.
 
 See `network/nexus9k.example.cfg` and `network/catalyst2960x-oob.example.cfg` for configuration examples.
+
+## Planned new application VLANs (not yet configured)
+
+VLAN 110 (`AI_LLM_LAB`) and VLAN 120 (`APP_WORKLOADS`) are approved design reservations, **not verified UCG networks**. Create corresponding UCG networks and firewall rules before enabling guest traffic. Add 110/120 to `TRUNK-TO-NEXUS-CORE` on UCG port 6 and Nexus Ethernet1/48 after verifying native VLAN handling. Keep them off the Catalyst OOB trunk. Existing VLAN 41 remains trusted infrastructure services; VLAN 100 is transport only. Guest VMs/LXCs are placed according to trust/function, not hypervisor type. VLAN 31 should be removed from the UCG trunk after isolated-backup design review.
