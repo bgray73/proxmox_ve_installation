@@ -87,3 +87,21 @@ Owner screenshot shows `TRUNK-TO-NEXUS-CORE`: Active; Infrastructure mode; **Nat
 ### Planned Nexus-to-UCG physical uplink (not installed)
 
 Owner preference: reserve the **last 10GbE copper/RJ45 port** on the Nexus 9K for a 10GbE link to an available 10GbE RJ45 LAN port on UCG Fiber. Exact Nexus model, interface number, UCG LAN port, cabling and negotiated speed are **TBD** until hardware inspection. Use the confirmed UCG `TRUNK-TO-NEXUS-CORE` tagged VLANs **20,30,31,41,100** on this uplink, subject to review of whether PBS backup VLAN 31 should reach UCG. UniFi native VLAN `None` must be reconciled with switch-side native VLAN/untagged behavior before applying configuration. Do not assign `Ethernet1/48` or another guessed interface, and do not change live switch settings yet.
+
+### Nexus hardware identification and reserved uplink
+
+Owner-provided listing identifies **Cisco Nexus N9K-C9372TX** (48 × 1/10GBASE-T RJ45 and 6 × 40GbE QSFP+). Reserve **Ethernet1/48**, the last 10GbE copper port, for the planned 10GbE UCG Fiber uplink. The UCG port number, native/untagged behavior, cabling, and live link speed remain to be confirmed. Tagged VLANs in the saved UCG profile: 20,30,31,41,100. This is a reservation, not an applied NX-OS configuration.
+
+Candidate NX-OS configuration for review only:
+
+```text
+vlan 20,30,31,41,100
+interface Ethernet1/48
+  description UPLINK-TO-UCG-FIBER
+  switchport
+  switchport mode trunk
+  switchport trunk allowed vlan 20,30,31,41,100
+  no shutdown
+```
+
+Before applying, verify hardware port labeling and choose an explicit native VLAN policy compatible with UniFi `None`; consider removing VLAN 31 from the UCG uplink if backup traffic is intended to remain isolated.
