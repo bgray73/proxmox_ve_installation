@@ -123,3 +123,7 @@ Combined planned uplinks: **UCG port 1 → Catalyst OOB (1GbE)**; **UCG port 6 S
 ### Catalyst uplink interface reservation
 
 Owner selects the **last copper Ethernet port on the Cisco Catalyst 2960-X** as the UCG uplink, connected to **UCG Fiber port 1**. Exact Catalyst interface designation is pending confirmation of the switch's 24- versus 48-port model and port numbering; do not guess `Gi1/0/24` or `Gi1/0/48`. Configure that port as a trunk with tagged VLANs **10,20,30,40,50,60,70,80** and reconcile native/untagged VLAN behavior with the UCG profile before deployment. This is a planned cable assignment only.
+
+### Catalyst model refinement: 48-port PoE
+
+Owner confirms the Catalyst 2960-X is a **48-port PoE** variant. For a standalone unit with standard numbering, reserve **GigabitEthernet1/0/48** (last copper access port) for **UCG Fiber port 1**. Verify the exact PID, interface list and stack member numbering using `show version` and `show interfaces status` before applying. PoE capability does not mean PoE should be used on this switch-to-switch link: disable PoE on the Catalyst uplink with `power inline never` if supported, and disable UCG port 1 PoE if configurable. The tagged VLANs remain 10,20,30,40,50,60,70,80; native VLAN remains subject to compatibility validation. No live changes performed.
