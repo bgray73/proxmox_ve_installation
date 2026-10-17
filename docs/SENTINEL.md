@@ -59,3 +59,7 @@ UCG Fiber screenshot confirms `SDN_VXLAN_TRANSPORT` uses VLAN ID 100, router mod
 ## Catalyst 2960-X UCG trunk profile (owner screenshot)
 
 Profile `TRUNK-TO-2960X-OOB`: port state Active, port mode Infrastructure, native VLAN/Network None, tagged VLAN management Custom, 8 selected tagged VLANs (identities not yet shown), Auto PoE enabled, Auto Negotiate enabled. **Do not assume UniFi native None equals Cisco native VLAN 998.** Confirm exact tagged VLAN list, untagged behavior, switch uplink configuration, and assigned physical port before cabling. Disable PoE on a dedicated switch uplink if supported and not needed. Nexus trunk profile remains unverified.
+
+### Catalyst tagged VLAN evidence (owner screenshot)
+
+The `TRUNK-TO-2960X-OOB` tagged-VLAN selector visibly checks **20, 30, 31, 41, 100** and leaves **1, 10, 40, 50, 60, 70, 80, 90** unchecked. The profile overview previously reported `8 Selected`, inconsistent with five visible checks; re-open and confirm saved state before changing the port. **VLAN 10 (OOB) is missing** from the visible selection and should be evaluated for the Catalyst uplink. VLANs 31 (PBS backup) and 100 (VXLAN transport) are unexpected on a dedicated OOB trunk and should be reviewed against the Nexus fabric design. VLAN 40 may be required if the Tailscale subnet router physically attaches to the Catalyst. This is a proposed review, not authorization to alter the UCG or switch.
