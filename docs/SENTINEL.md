@@ -127,3 +127,7 @@ Owner selects the **last copper Ethernet port on the Cisco Catalyst 2960-X** as 
 ### Catalyst model refinement: 48-port PoE
 
 Owner confirms the Catalyst 2960-X is a **48-port PoE** variant. For a standalone unit with standard numbering, reserve **GigabitEthernet1/0/48** (last copper access port) for **UCG Fiber port 1**. Verify the exact PID, interface list and stack member numbering using `show version` and `show interfaces status` before applying. PoE capability does not mean PoE should be used on this switch-to-switch link: disable PoE on the Catalyst uplink with `power inline never` if supported, and disable UCG port 1 PoE if configurable. The tagged VLANs remain 10,20,30,40,50,60,70,80; native VLAN remains subject to compatibility validation. No live changes performed.
+
+### UCG Catalyst uplink port revision (owner preference)
+
+**Supersedes earlier reservation of UCG Fiber port 1:** Owner prefers a **non-PoE UCG LAN port** for the Catalyst 2960-X 48-port PoE uplink. **UCG port 2 is a tentative candidate only**, pending confirmation from the UCG port map that it is non-PoE, LAN-capable, and free. Keep **Catalyst Gi1/0/48** reserved for the switch end. Existing `TRUNK-TO-2960X-OOB` VLAN set (10,20,30,40,50,60,70,80) unchanged; native VLAN verification outstanding. Do not cable or configure UCG port 1 for this uplink based on older documentation.
