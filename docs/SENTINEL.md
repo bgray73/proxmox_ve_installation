@@ -113,3 +113,9 @@ Owner is considering **UCG Fiber port 6 or 7** for the Nexus uplink, with a **10
 ### UCG Fiber port selection (owner device screenshot)
 
 Current device overview shows **port 5 connected at 10 GbE** (uplink), **port 6 disconnected with SFP label**, and **port 7 disconnected with WAN/globe icon**; port 3 has an active GbE connection. Preferred Nexus connection is **UCG Fiber port 6 SFP+ → 10GBASE-T RJ45 SFP+ transceiver → Cat6a → Nexus C9372TX Ethernet1/48**. Before procurement, verify port 6 supports 10G LAN mode and the specific copper SFP+ module's compatibility, power, thermal requirements and supported cable length. Keep port 5's existing uplink and port 7's WAN designation unchanged. No physical link or switch configuration has been changed.
+
+### Planned UCG-to-Catalyst OOB uplink (owner approved)
+
+Reserve **UCG Fiber port 1 → Cisco Catalyst 2960-X OOB uplink port (exact Cisco interface TBD)** using a 1GbE RJ45 Ethernet link, subject to confirming port 1 is free and LAN-capable. Assign saved UCG profile `TRUNK-TO-2960X-OOB` to port 1: tagged VLANs **10,20,30,40,50,60,70,80**, native network **None**. Configure the corresponding Catalyst port as an 802.1Q trunk with matching allowed VLANs, but first validate untagged/native VLAN handling (Cisco VLAN 998 is only a candidate). Disable PoE on the UCG uplink if supported and unnecessary. Do not also interconnect Catalyst and Nexus without a reviewed Layer 2 topology and loop-prevention plan. This reservation is **planning only**, not an applied configuration.
+
+Combined planned uplinks: **UCG port 1 → Catalyst OOB (1GbE)**; **UCG port 6 SFP+ → 10GBASE-T module → Nexus C9372TX Ethernet1/48 (10GbE)**. UCG port 5 remains in its current role. Confirm physical port assignment and firewall policies before cabling.
