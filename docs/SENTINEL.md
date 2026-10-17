@@ -63,3 +63,7 @@ Profile `TRUNK-TO-2960X-OOB`: port state Active, port mode Infrastructure, nativ
 ### Catalyst tagged VLAN evidence (owner screenshot)
 
 The `TRUNK-TO-2960X-OOB` tagged-VLAN selector visibly checks **20, 30, 31, 41, 100** and leaves **1, 10, 40, 50, 60, 70, 80, 90** unchecked. The profile overview previously reported `8 Selected`, inconsistent with five visible checks; re-open and confirm saved state before changing the port. **VLAN 10 (OOB) is missing** from the visible selection and should be evaluated for the Catalyst uplink. VLANs 31 (PBS backup) and 100 (VXLAN transport) are unexpected on a dedicated OOB trunk and should be reviewed against the Nexus fabric design. VLAN 40 may be required if the Tailscale subnet router physically attaches to the Catalyst. This is a proposed review, not authorization to alter the UCG or switch.
+
+### Subsequent eight-VLAN selection screenshot
+
+A subsequent screenshot of a tagged-VLAN selector shows **10, 20, 30, 40, 50, 60, 70, 80** selected, with **1, 31, 41, 90, 100** unselected. The screenshot itself does not display the parent port-profile name, so confirm whether this is `TRUNK-TO-2960X-OOB` and whether changes were saved before replacing the earlier observed selection. If it is the Catalyst trunk, VLAN 10 is now present; VLAN 41 is absent and must instead reach `sentinel01` through the planned Nexus path or another explicitly designed uplink. Do not assume tagged VLAN membership establishes firewall reachability.
