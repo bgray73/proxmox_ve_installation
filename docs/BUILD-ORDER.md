@@ -69,6 +69,8 @@ phase gates the next — do not skip ahead past a verification step.
 - [ ] Wire notifications per `docs/NOTIFICATIONS.md`; confirm a test
       alert reaches your phone.
 
+- [ ] Prepare dedicated \`sentinel01\` LXC on pve01 (VLAN 41) after cluster and network validation; see \`docs/SENTINEL.md\`. Keep the initial deployment read-only and authenticate any remote access.
+
 ## Phase 9 — Backups and monitoring
 
 - [ ] `docs/BACKUP-JOBS.md`: `nightly-prod` → `vm-ssd` and
