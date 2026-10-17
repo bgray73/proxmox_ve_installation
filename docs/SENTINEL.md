@@ -109,3 +109,7 @@ Before applying, verify hardware port labeling and choose an explicit native VLA
 ### Tentative UCG Fiber port and copper SFP+ uplink
 
 Owner is considering **UCG Fiber port 6 or 7** for the Nexus uplink, with a **10GBASE-T RJ45 SFP+ transceiver** in the UCG and Cat6a to Nexus **Ethernet1/48**. **Do not finalize port 6/7** until the UCG Fiber port map confirms that the chosen port is a 10Gbps LAN-capable SFP+ cage (not WAN-only or otherwise assigned). Check Ubiquiti transceiver support, module power/thermal limits, and copper cable distance before purchasing. Alternative: use an available built-in 10GbE RJ45 LAN port if supported, avoiding an SFP+ copper module. This is a planned connection, not deployed.
+
+### UCG Fiber port selection (owner device screenshot)
+
+Current device overview shows **port 5 connected at 10 GbE** (uplink), **port 6 disconnected with SFP label**, and **port 7 disconnected with WAN/globe icon**; port 3 has an active GbE connection. Preferred Nexus connection is **UCG Fiber port 6 SFP+ → 10GBASE-T RJ45 SFP+ transceiver → Cat6a → Nexus C9372TX Ethernet1/48**. Before procurement, verify port 6 supports 10G LAN mode and the specific copper SFP+ module's compatibility, power, thermal requirements and supported cable length. Keep port 5's existing uplink and port 7's WAN designation unchanged. No physical link or switch configuration has been changed.
