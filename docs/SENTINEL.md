@@ -51,3 +51,7 @@
 | 90 Printers | 10.10.90.1/24 |
 
 **Design discrepancy:** VLAN 31 is gateway-managed on the UCG, while the topology describes an isolated backup fabric. Do not assume firewall isolation or change the live network until the routing and switch-port plan is reviewed. VLAN 100 remains third-party gateway with no UCG subnet shown. Trunk membership and firewall policy remain unverified.
+
+## VLAN 100 VXLAN transport
+
+UCG Fiber screenshot confirms `SDN_VXLAN_TRANSPORT` uses VLAN ID 100, router mode `Third-party Gateway`, and DHCP Guarding disabled. No UCG subnet or gateway is shown. Treat this as a Layer 2 transport on UCG; assign static, unique host IPs on the Proxmox VXLAN underlay interfaces after selecting a non-overlapping subnet, without a default gateway. Verify Nexus tagged VLAN 100 carriage and MTU end to end. This screenshot does **not** establish trunk profile membership or firewall policy.
