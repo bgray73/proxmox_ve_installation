@@ -1,6 +1,6 @@
 # Sentinel integration contract
 
-**Status:** Planning only. No Proxmox hosts are deployed. The owner supplied a UCG Fiber screenshot confirming VLAN 10 (10.10.10.0/24), 20 (10.10.20.0/24), 30 (10.10.30.0/24), 31 (10.10.31.0/24), 40 (10.10.40.0/24), 41 (10.10.41.0/24), 50 (10.10.50.0/24), 60 (10.10.60.0/24), 70 (10.10.70.0/24), 80 (10.10.80.0/24), and 90 (10.10.90.0/24). Gateway addresses, firewall policies, and live reachability remain unverified. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
+**Status:** Planning only. No Proxmox hosts are deployed. The owner supplied a UCG Fiber screenshot confirming VLAN 10 (10.10.10.0/24), 20 (10.10.20.0/24), 30 (10.10.30.0/24), 31 (10.10.31.0/24), 40 (10.10.40.0/24), 41 (10.10.41.0/24), 50 (10.10.50.0/24), 60 (10.10.60.0/24), 70 (10.10.70.0/24), 80 (10.10.80.0/24), and 90 (10.10.90.0/24). The owner also supplied a UCG overview showing VLAN 100 as a third-party-gateway network with no displayed subnet, custom port profiles TRUNK-TO-2960X-OOB and TRUNK-TO-NEXUS-CORE, and an enabled Home WireGuard VPN displaying 10.20.30.1/24. Trunk allowed VLANs, native VLAN, port assignment, gateway addresses, firewall policies, and live reachability remain unverified. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
 
 | Setting | Contract |
 | --- | --- |
