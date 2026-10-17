@@ -67,3 +67,7 @@ The `TRUNK-TO-2960X-OOB` tagged-VLAN selector visibly checks **20, 30, 31, 41, 1
 ### Subsequent eight-VLAN selection screenshot
 
 A subsequent screenshot of a tagged-VLAN selector shows **10, 20, 30, 40, 50, 60, 70, 80** selected, with **1, 31, 41, 90, 100** unselected. The screenshot itself does not display the parent port-profile name, so confirm whether this is `TRUNK-TO-2960X-OOB` and whether changes were saved before replacing the earlier observed selection. If it is the Catalyst trunk, VLAN 10 is now present; VLAN 41 is absent and must instead reach `sentinel01` through the planned Nexus path or another explicitly designed uplink. Do not assume tagged VLAN membership establishes firewall reachability.
+
+### Confirmed saved Catalyst profile
+
+Owner confirms the later eight-VLAN selection is **saved** under `TRUNK-TO-2960X-OOB`: tagged VLANs **10, 20, 30, 40, 50, 60, 70, 80**; excluded **1, 31, 41, 90, 100**. This supersedes the earlier five-VLAN screenshot for the Catalyst profile. The native VLAN is shown as `None` in the profile overview; its untagged behavior and compatibility with Cisco native VLAN 998 still require verification. Nexus trunk profile remains to be inspected.
