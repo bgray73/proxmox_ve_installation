@@ -55,3 +55,7 @@
 ## VLAN 100 VXLAN transport
 
 UCG Fiber screenshot confirms `SDN_VXLAN_TRANSPORT` uses VLAN ID 100, router mode `Third-party Gateway`, and DHCP Guarding disabled. No UCG subnet or gateway is shown. Treat this as a Layer 2 transport on UCG; assign static, unique host IPs on the Proxmox VXLAN underlay interfaces after selecting a non-overlapping subnet, without a default gateway. Verify Nexus tagged VLAN 100 carriage and MTU end to end. This screenshot does **not** establish trunk profile membership or firewall policy.
+
+## Catalyst 2960-X UCG trunk profile (owner screenshot)
+
+Profile `TRUNK-TO-2960X-OOB`: port state Active, port mode Infrastructure, native VLAN/Network None, tagged VLAN management Custom, 8 selected tagged VLANs (identities not yet shown), Auto PoE enabled, Auto Negotiate enabled. **Do not assume UniFi native None equals Cisco native VLAN 998.** Confirm exact tagged VLAN list, untagged behavior, switch uplink configuration, and assigned physical port before cabling. Disable PoE on a dedicated switch uplink if supported and not needed. Nexus trunk profile remains unverified.
