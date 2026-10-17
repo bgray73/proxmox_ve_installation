@@ -1,6 +1,6 @@
 # Sentinel integration contract
 
-**Status:** Planning only. No Proxmox hosts are deployed. The owner confirms UCG Fiber VLANs are already configured; live gateway/firewall reachability is not yet verified. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
+**Status:** Planning only. No Proxmox hosts are deployed. The owner supplied a UCG Fiber screenshot confirming VLAN 10 (10.10.10.0/24), 20 (10.10.20.0/24), 30 (10.10.30.0/24), 31 (10.10.31.0/24), 40 (10.10.40.0/24), 41 (10.10.41.0/24), 50 (10.10.50.0/24), 60 (10.10.60.0/24), 70 (10.10.70.0/24), 80 (10.10.80.0/24), and 90 (10.10.90.0/24). Gateway addresses, firewall policies, and live reachability remain unverified. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
 
 | Setting | Contract |
 | --- | --- |
@@ -8,7 +8,7 @@
 | Guest | sentinel01 |
 | Type | Unprivileged Debian 13 LXC, native Node.js |
 | Capacity | 2 vCPU, 4096 MiB RAM, 512 MiB swap, 32 GiB SSD-backed disk |
-| Network | VLAN 41 infrastructure services, routed to PVE API on VLAN 20 |
+| Network | VLAN 41 infrastructure services (10.10.41.0/24), routed to PVE API on VLAN 20 (10.10.20.0/24) |
 | CTID, IP, storage, bridge | TBD after host/network provisioning |
 | Startup | On boot; provision stopped for review |
 | Authentication | Loopback-only app until protected behind authenticated reverse proxy |
