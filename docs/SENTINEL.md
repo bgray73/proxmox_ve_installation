@@ -1,6 +1,6 @@
 # Sentinel integration contract
 
-**Status:** Planning only. No Proxmox hosts are deployed. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
+**Status:** Planning only. No Proxmox hosts are deployed. The owner confirms UCG Fiber VLANs are already configured; live gateway/firewall reachability is not yet verified. This repo owns the LXC resource and VLAN placement; [sentinel-lab](https://github.com/bgray73/sentinel-lab) owns the application and its configuration.
 
 | Setting | Contract |
 | --- | --- |
@@ -19,7 +19,7 @@
 ## Ownership and dependencies
 
 1. Follow `docs/BUILD-ORDER.md` through network, PVE installation, cluster, and backup prerequisites.
-2. Confirm the VLAN 41 gateway, firewall policy, and management bridge. **VLAN 41 must be able to reach the Proxmox API on VLAN 20 TCP 8006**; avoid Corosync VLAN 21 and PBS backup VLAN 31.
+2. Reuse the already configured UCG Fiber VLANs. Verify the VLAN 41 gateway, firewall policy, and management bridge after the hosts are connected. **VLAN 41 must be able to reach the Proxmox API on VLAN 20 TCP 8006**; avoid Corosync VLAN 21 and PBS backup VLAN 31.
 3. Validate an unused cluster CTID and SSD-backed rootdir storage. Reserve an address for sentinel01 only after DHCP/VLAN configuration is known.
 4. Review the [Sentinel LXC plan](https://github.com/bgray73/sentinel-lab/blob/main/docs/sentinel-dedicated-lxc.md) and [draft provisioning PR #34](https://github.com/bgray73/sentinel-lab/pull/34). The Sentinel repository currently owns the guarded provisioning script; migrate or invoke it from this repository only after one canonical owner is selected, to avoid diverging copies.
 5. Create the stopped container, review its network and security settings, then start it and install Sentinel natively.
