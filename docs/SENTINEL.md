@@ -131,3 +131,7 @@ Owner confirms the Catalyst 2960-X is a **48-port PoE** variant. For a standalon
 ### UCG Catalyst uplink port revision (owner preference)
 
 **Supersedes earlier reservation of UCG Fiber port 1:** Owner prefers a **non-PoE UCG LAN port** for the Catalyst 2960-X 48-port PoE uplink. **UCG port 2 is a tentative candidate only**, pending confirmation from the UCG port map that it is non-PoE, LAN-capable, and free. Keep **Catalyst Gi1/0/48** reserved for the switch end. Existing `TRUNK-TO-2960X-OOB` VLAN set (10,20,30,40,50,60,70,80) unchanged; native VLAN verification outstanding. Do not cable or configure UCG port 1 for this uplink based on older documentation.
+
+### UCG non-PoE port identification and final preferred OOB uplink
+
+Owner reports UCG Fiber **ports 1–3 are non-PoE** and **ports 4–5 are PoE-capable**. Based on that identification, preferred physical link is again **UCG Fiber port 1 (non-PoE LAN) → Catalyst 2960-X 48-port PoE Gi1/0/48**. This supersedes the tentative port 2 candidate and previous hold on port 1. Assign saved UCG `TRUNK-TO-2960X-OOB` profile (tagged VLANs 10,20,30,40,50,60,70,80; native None) after verifying port 1 is free and correctly mapped. Disable PoE on Catalyst Gi1/0/48 (`power inline never`) if supported. Native VLAN behavior still must be verified. UCG port 6 remains reserved for Nexus Ethernet1/48. Planning only; no live configuration performed.
