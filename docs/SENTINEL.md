@@ -32,3 +32,22 @@
 - Application env/ports/auth/secret changes: update Sentinel first, then verify the firewall and proxy assumptions here.
 - Security: never commit API secrets, private certificates, or live management addresses without explicit review.
 - Deployment: neither repo's CI should automatically run `pct create` or deploy onto a live node.
+
+## UCG Fiber interface gateways (owner screenshot)
+
+| VLAN | Gateway |
+| --- | --- |
+| Default LAN | 192.168.1.1/23 |
+| 10 OOB | 10.10.10.1/24 |
+| 20 PVE management | 10.10.20.1/24 |
+| 30 PBS management | 10.10.30.1/24 |
+| 31 PBS backup | 10.10.31.1/24 |
+| 40 Tailscale infrastructure | 10.10.40.1/24 |
+| 41 Infrastructure services / Sentinel | 10.10.41.1/24 |
+| 50 IoT | 10.10.50.1/24 |
+| 60 Apple TV | 10.10.60.1/24 |
+| 70 iPhones | 10.10.70.1/24 |
+| 80 Wi-Fi AP management | 10.10.80.1/24 |
+| 90 Printers | 10.10.90.1/24 |
+
+**Design discrepancy:** VLAN 31 is gateway-managed on the UCG, while the topology describes an isolated backup fabric. Do not assume firewall isolation or change the live network until the routing and switch-port plan is reviewed. VLAN 100 remains third-party gateway with no UCG subnet shown. Trunk membership and firewall policy remain unverified.
