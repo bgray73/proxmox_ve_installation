@@ -75,3 +75,7 @@ Owner confirms the later eight-VLAN selection is **saved** under `TRUNK-TO-2960X
 ### Nexus trunk tagged-VLAN selector (owner screenshot)
 
 The latest screenshot, supplied in response to the Nexus trunk request, visibly selects VLANs **20, 30, 31, 41, 100** and excludes **10, 40, 50, 60, 70, 80, 90** (VLAN 1 partly obscured). The screenshot does not display the parent profile name or confirm the selection was saved. Confirm it is `TRUNK-TO-NEXUS-CORE` and saved before treating this as the deployed uplink configuration. VLAN 41 is selected for planned Sentinel service traffic; VLAN 31 on the UCG-facing trunk should be reviewed because the backup network was intended to be isolated. Native VLAN and physical port assignment remain unverified.
+
+### Confirmed saved Nexus profile
+
+Owner confirms the five-VLAN selector screenshot is **saved** under `TRUNK-TO-NEXUS-CORE`: tagged VLANs **20, 30, 31, 41, 100**. VLANs **10, 40, 50, 60, 70, 80, 90** are excluded. This is the intended UCG-to-Nexus profile, not evidence of switch-side configuration or physical port assignment. **Open checks:** native VLAN/untagged handling, Nexus port trunk allowed VLANs, UCG port assignment, and whether VLAN 31 needs to traverse the UCG uplink.
