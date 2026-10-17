@@ -105,3 +105,7 @@ interface Ethernet1/48
 ```
 
 Before applying, verify hardware port labeling and choose an explicit native VLAN policy compatible with UniFi `None`; consider removing VLAN 31 from the UCG uplink if backup traffic is intended to remain isolated.
+
+### Tentative UCG Fiber port and copper SFP+ uplink
+
+Owner is considering **UCG Fiber port 6 or 7** for the Nexus uplink, with a **10GBASE-T RJ45 SFP+ transceiver** in the UCG and Cat6a to Nexus **Ethernet1/48**. **Do not finalize port 6/7** until the UCG Fiber port map confirms that the chosen port is a 10Gbps LAN-capable SFP+ cage (not WAN-only or otherwise assigned). Check Ubiquiti transceiver support, module power/thermal limits, and copper cable distance before purchasing. Alternative: use an available built-in 10GbE RJ45 LAN port if supported, avoiding an SFP+ copper module. This is a planned connection, not deployed.
