@@ -83,3 +83,7 @@ Owner confirms the five-VLAN selector screenshot is **saved** under `TRUNK-TO-NE
 ### Confirmed UCG-to-Nexus profile overview
 
 Owner screenshot shows `TRUNK-TO-NEXUS-CORE`: Active; Infrastructure mode; **Native VLAN / Network = None**; Tagged VLAN Management = Custom; **5 Selected** (previously confirmed saved VLANs 20,30,31,41,100); Auto PoE enabled; Auto Negotiate enabled. Switch-side candidate configuration: trunk with allowed VLANs `20,30,31,41,100`, actual interface TBD. **Do not treat UniFi native `None` as proof that untagged frames are dropped or that Cisco native VLAN 998 matches.** Confirm untagged behavior and physical port mapping before applying a native VLAN policy. Consider disabling PoE on the switch uplink after confirming port capabilities. No live configuration changed.
+
+### Planned Nexus-to-UCG physical uplink (not installed)
+
+Owner preference: reserve the **last 10GbE copper/RJ45 port** on the Nexus 9K for a 10GbE link to an available 10GbE RJ45 LAN port on UCG Fiber. Exact Nexus model, interface number, UCG LAN port, cabling and negotiated speed are **TBD** until hardware inspection. Use the confirmed UCG `TRUNK-TO-NEXUS-CORE` tagged VLANs **20,30,31,41,100** on this uplink, subject to review of whether PBS backup VLAN 31 should reach UCG. UniFi native VLAN `None` must be reconciled with switch-side native VLAN/untagged behavior before applying configuration. Do not assign `Ethernet1/48` or another guessed interface, and do not change live switch settings yet.
