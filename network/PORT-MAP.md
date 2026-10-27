@@ -23,10 +23,10 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 
 | Port | Description | Mode | VLAN |
 |---|---|---|---:|
-| Gi1/0/1 | PVE01 R640 iDRAC | access | 10 |
-| Gi1/0/2 | PVE02 R640 iDRAC | access | 10 |
-| Gi1/0/3 | PVE03 R440 iDRAC | access | 10 |
-| Gi1/0/4 | PBS01 Supermicro IPMI | access | 10 |
+| Gi1/0/15 | PVE01 R640 iDRAC | access | 10 |
+| Gi1/0/16 | PVE02 R640 iDRAC | access | 10 |
+| Gi1/0/17 | PVE03 R440 iDRAC | access | 10 |
+| Gi1/0/18 | PBS01 Supermicro IPMI | access | 10 |
 | Gi1/0/5 | PVE01 1Gb management | access | 20 |
 | Gi1/0/6 | PVE02 1Gb management | access | 20 |
 | Gi1/0/7 | PVE03 1Gb management | access | 20 |
@@ -36,6 +36,14 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 | Gi1/0/11 | Tailscale subnet router 1 | access | 40 |
 | Gi1/0/12 | Tailscale subnet router 2, optional | access | 40 |
 | Gi1/0/48 | firewall/router OOB uplink | trunk | 10,20,30,40,998 |
+
+> **As-built note (2026-10-27):** the four BMC ports above (Gi1/0/15–18) are
+> configured and saved on the production Catalyst as shown. The original design
+> numbered them Gi1/0/1–4, but on the live switch those ports carry house
+> devices on VLAN 50 (Gi1/0/1 Nexus mgmt0, Gi1/0/2 Lutron hub, Gi1/0/3 Hue
+> bridge, Gi1/0/4 hot tub controller), so the BMC block was placed on the free
+> Gi1/0/15–18 instead. The remaining rows in this table are design intent; the
+> live switch differs (AP trunks on Gi1/0/10–12, uplink trunk on Gi1/0/47).
 
 The 2960-X remains Layer 2 in this design. Its management SVI can live in VLAN 10 with `ip default-gateway` pointing at the firewall/router. Inter-VLAN routes for VLANs 10/20/30/40 belong on the firewall/router, not on the OOB switch.
 
