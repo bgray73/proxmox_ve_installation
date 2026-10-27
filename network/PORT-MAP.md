@@ -8,16 +8,24 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 
 | Port | Description | Mode | VLANs |
 |---|---|---|---|
-| E1/11 | PVE01 R640 primary data | trunk | 20,21,31,41,100; native 998 |
-| E1/12 | PVE02 R640 primary data | trunk | 20,21,31,41,100; native 998 |
-| E1/13 | PVE03 R440 primary data | trunk | 20,21,31,41,100; native 998 |
-| E1/15 | PBS01 Supermicro primary data | trunk | 30,31; native 998 |
-| E1/21 | PVE01 10Gb failover | trunk | 20,21,31,41,100; native 998 |
-| E1/22 | PVE02 10Gb failover | trunk | 20,21,31,41,100; native 998 |
-| E1/23 | PVE03 10Gb failover | trunk | 20,21,31,41,100; native 998 |
+| E1/49 | PVE01 R640 primary data (40Gb QSFP+) | trunk | 20,21,31,41,100; native 998 |
+| E1/50 | PVE02 R640 primary data (40Gb QSFP+) | trunk | 20,21,31,41,100; native 998 |
+| E1/51 | PVE03 R440 primary data (40Gb QSFP+) | trunk | 20,21,31,41,100; native 998 |
+| E1/52 | PBS01 Supermicro primary data (40Gb QSFP+) | trunk | 30,31; native 998 |
+| E1/15 | PVE01 10Gb failover | trunk | 20,21,31,41,100; native 998 |
+| E1/16 | PVE02 10Gb failover | trunk | 20,21,31,41,100; native 998 |
+| E1/17 | PVE03 10Gb failover | trunk | 20,21,31,41,100; native 998 |
+| E1/18 | PBS01 10Gb failover | trunk | 30,31; native 998 |
 | E1/48 | firewall/router uplink | trunk | 20,30,31,41,100,998 |
 
-> The exact Nexus interfaces used by the four 40Gb QSFP+ server links must be verified on the installed N9K-C9372TX before deployment. The table above is a logical placeholder map, not a claim that E1/11–15 are QSFP ports.
+> **As-built note (2026-10-27):** the Nexus rows above are verified against the
+> production N9K-C9372TX running-config. The 40Gb primaries sit on the QSFP+
+> ports E1/49–52 (the original design used placeholder numbers E1/11–15, which
+> are plain 10Gb copper ports on this chassis). The 10Gb failover block was
+> moved from E1/21–23 to E1/15–18 on 2026-10-27 so the backup ports mirror the
+> Catalyst BMC numbering (15=PVE01, 16=PVE02, 17=PVE03, 18=PBS01), and a PBS01
+> failover (E1/18) was added — the original design gave PBS01 no 10Gb backup.
+> E1/21–23 are parked UNUSED-SHUT again.
 
 ## Cisco Catalyst 2960-X — OOB and 1Gb management
 
