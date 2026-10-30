@@ -10,14 +10,24 @@ provider. Compatible with both Terraform and OpenTofu.
 |---------------|------|-------|------|---------------|--------------------------------------|
 | adguard       | LXC  | pve01 | 200  | 10.10.41.10   | AdGuard Home (DNS + ad blocking)     |
 | proxy         | LXC  | pve02 | 201  | 10.10.41.11   | Nginx Proxy Manager (TLS front door) |
-| uptime        | LXC  | pve03 | 202  | 10.10.41.12   | Uptime Kuma (monitoring + alerts)    |
+| uptime        | LXC  | pve02 | 202  | 10.10.41.12   | Uptime Kuma (monitoring + alerts)    |
 | semaphore     | LXC  | pve02 | 203  | 10.10.41.13   | Semaphore (Ansible UI)               |
 | ntfy          | LXC  | pve01 | 204  | 10.10.41.14   | ntfy (push notifications)            |
 | observability | VM   | pve02 | 300  | 10.10.41.20   | Grafana + Prometheus + Loki          |
-| docker        | VM   | pve03 | 301  | 10.10.41.21   | Docker workload host                 |
-| pdm01         | VM   | pve01 | 302  | 10.10.41.22   | Proxmox Datacenter Manager (HA)      |
+| docker        | VM   | pve01 | 301  | 10.10.41.21   | Docker workload host                 |
+| pdm01         | VM   | pve02 | 302  | 10.10.41.22   | Proxmox Datacenter Manager (HA)      |
+| livepca-01    | VM   | pve01 | 303  | DHCP (.129)   | LivePCA capture appliance (not Terraform-managed) |
+| trex-01       | VM   | pve02 | 304  | 10.10.41.23   | Traffic generator (not Terraform-managed) |
 
-All guests sit on the infra VLAN (default 30, `10.10.41.0/24`), get static
+**As-built status (2026-10-30):** every guest above is deployed and
+running. The fleet was built directly on the cluster (not via
+`tofu apply`) to this spec, with two placement changes from the
+original plan — uptime and pdm01 live on pve02, docker on pve01 —
+because pve03 is not installed yet. CT 204 runs as a bare OS by
+choice; the live ntfy instance is on the Lenovo terminal server.
+VMs 303/304 were added outside this plan and are not managed here.
+
+All guests sit on the infra VLAN (41, `10.10.41.0/24`), get static
 IPs, have your SSH key injected, and start in dependency order (DNS first).
 
 ## Usage
@@ -42,8 +52,10 @@ storage, template) are variables with defaults in `variables.tf`.
   default if you downloaded a different Debian build.
 - `ubuntu_template_vmid` must match the cloud-init template built by
   `templates/cloud-init/create-ubuntu-cloudinit-template.sh`.
-- LXCs are unprivileged with nesting disabled. If a future service needs
-  Docker *inside* a container, give it its own VM instead.
+- LXCs are unprivileged with nesting disabled by default. Exception
+  as-built: CT 201 (proxy) runs with `nesting=1` + `fuse=1` because
+  Nginx Proxy Manager runs in Docker inside it. If a future service
+  needs Docker *inside* a container, give it its own VM instead.
 
 ## Optional modules (default off)
 
