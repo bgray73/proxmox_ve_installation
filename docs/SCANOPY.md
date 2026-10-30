@@ -1,6 +1,6 @@
 # Scanopy on Proxmox
 
-This is a deployment and validation runbook for the Dell 42U home lab. **Status: planned; Scanopy has not been installed or scanned by this repository.** The source of truth for rack U positions and power is [RACK-LAYOUT.md](RACK-LAYOUT.md). Scanopy will supply the observed network and service topology.
+This is a deployment and validation runbook for the Dell 42U home lab. **Status: deployed 2026-10-30** — VM 305 `scanopy-01` on pve02 (2 vCPU, 4 GB RAM, 32 GB disk, static 10.10.41.25 on VLAN 41), Docker Engine + Compose installed, upstream `docker-compose.yml` (fetched from `main` 2026-10-30) running unmodified at `/opt/scanopy` except a `.env` setting `SCANOPY_PUBLIC_URL=http://10.10.41.25:60072`. All three containers (server, daemon, postgres) verified healthy and the UI answers at `http://10.10.41.25:60072`. Still to do: create the initial account in the UI, add SNMP/LLDP credentials, and run the first discovery (below). The source of truth for rack U positions and power is [RACK-LAYOUT.md](RACK-LAYOUT.md). Scanopy will supply the observed network and service topology.
 
 ## Placement
 
