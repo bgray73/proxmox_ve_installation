@@ -146,6 +146,7 @@ phase gates the next — do not skip ahead past a verification step.
 | 306  | vault-01      | VM   | pve01 | 10.10.41.26       | running (Vaultwarden; HA + 15-min replication to pve02) |
 | 307  | livenx-01     | VM   | pve01 | DHCP (.247)       | running (LiveNX server 26.2.2; not yet licensed) |
 | 308  | homeassistant-01 | VM | pve02 | DHCP (.120)       | running (Home Assistant OS 18.4; onboarding pending) |
+| 309  | authentik-01  | VM   | pve02 | 10.10.41.28       | running (Authentik 2026.8.5; initial admin setup pending) |
 
 Still to deploy: **pve03** (node install, needs a second SSD) and
 **pbs01 / PBS** (Phase 6 — 9300-8i HBA swap first), then the PDM→pbs01
