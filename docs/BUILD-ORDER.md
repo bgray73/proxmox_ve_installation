@@ -142,7 +142,9 @@ phase gates the next — do not skip ahead past a verification step.
 | 300  | observability | VM   | pve02 | 10.10.41.20       | running |
 | 302  | pdm01         | VM   | pve02 | 10.10.41.22       | running (HA) |
 | 304  | trex-01       | VM   | pve02 | 10.10.41.23       | running (rebuilt 2026-10-30; traffic gen via kernel tools — DPDK passthrough parked) |
-| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (Scanopy stack up; first discovery not yet run) |
+| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (first discovery complete) |
+| 306  | vault-01      | VM   | pve01 | 10.10.41.26       | running (Vaultwarden; HA + 15-min replication to pve02) |
+| 307  | livenx-01     | VM   | pve01 | DHCP (.247)       | running (LiveNX server 26.2.2; not yet licensed) |
 
 Still to deploy: **pve03** (node install, needs a second SSD) and
 **pbs01 / PBS** (Phase 6 — 9300-8i HBA swap first), then the PDM→pbs01
