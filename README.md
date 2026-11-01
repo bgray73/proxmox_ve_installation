@@ -322,7 +322,7 @@ See [`templates/cloud-init/README.md`](templates/cloud-init/README.md).
 
 ## Rack documentation and Scanopy
 
-The [Dell 42U rack plan](docs/RACK-LAYOUT.md) records planned front/rear positions and circuit assignments. The [Scanopy runbook](docs/SCANOPY.md) describes running Scanopy in a Debian VM on Proxmox and comparing its discovered links with the planned port map. Neither the scan nor the physical U positions have been verified by this repository.
+The [Dell 42U rack plan](docs/RACK-LAYOUT.md) records planned front/rear positions and circuit assignments. The [Scanopy runbook](docs/SCANOPY.md) describes running Scanopy in a VM on Proxmox and comparing its discovered links with the planned port map; the first discovery ran 2026-10-30 (12 hosts, 0 warnings — see the results section there). The physical U positions have not been verified by this repository.
 
 ## Secure remote management
 
