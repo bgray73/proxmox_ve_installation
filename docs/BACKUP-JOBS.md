@@ -93,6 +93,23 @@ Notes:
 - `--prune` overrides the `keep-all` default per job if you ever need the
   PVE side to prune (not recommended — keep PBS prune jobs authoritative).
 
+## Interim backups before PBS exists (as-built 2026-11-01)
+
+The jobs above target PBS, which is not installed yet (Phase 6).
+Until it is, two weekly **config-level** backups run from the Lenovo
+terminal server. They protect configuration, not guest data — the
+PBS jobs above remain the plan for guest backups.
+
+| When | What | Where it lands |
+|---|---|---|
+| Sun 03:15 | Fleet config bundle: AdGuard (CT 200) config + data, NPM (CT 201) `/opt/npm`, observability configs (VM 300), Authentik (VM 309 — database dump + compose files) | Dated, checksum-verified bundles on pve02, `/root/fleet-config-backups/` (keep 4). Interim target — repoint to PBS when it exists. |
+| Sun 04:15 | Lenovo critical backup: Homelab CA, SSH keys, switch configs and scripts, service configs (ntfy, syslog, NUT staging), crontab and package manifests | Local archives on the Lenovo (keep 4). The archive contains secrets — handle it like a key. |
+
+**Known gap:** the UniFi controller (UCG-Fiber) is **not** covered by
+any scripted backup. Its configuration must be exported manually from
+the UniFi UI; until that export exists, a gateway failure means
+rebuilding the UniFi config from documentation and screenshots.
+
 ## How it ties together
 
 - **Restore tests** (`docs/BACKUP-RESTORE-TESTS.md`): the nightly jobs produce

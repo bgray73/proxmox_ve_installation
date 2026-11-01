@@ -114,6 +114,10 @@ phase gates the next — do not skip ahead past a verification step.
 
 ## Phase 9 — Backups and monitoring
 
+- [x] Interim (pre-PBS) config-level backups running weekly:
+      fleet config bundle (Sun 03:15 → pve02) and Lenovo critical
+      backup (Sun 04:15). UniFi is **not** covered — manual export
+      from the UniFi UI still owed. See `docs/BACKUP-JOBS.md`.
 - [ ] `docs/BACKUP-JOBS.md`: `nightly-prod` → `vm-ssd` and
       `nightly-scratch` → `scratch` jobs; every guest assigned to the
       `prod` or `scratch` pool.
