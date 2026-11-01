@@ -48,7 +48,11 @@ phase gates the next — do not skip ahead past a verification step.
       to install — waiting on a second SSD.)
 - [ ] Run burn-in per `docs/BURN-IN.md` before trusting any node.
 - [ ] Apply firmware updates per `docs/FIRMWARE.md`.
-      (Tracked separately as the Isaac firmware/driver update goal.)
+      (Tracked separately as the Isaac firmware/driver update goal.
+      Check-only pass done 2026-10-31; the first update attempt
+      failed at Lifecycle Controller staging — RED085 — with nothing
+      applied. Next step is iDRAC-first via the WebUI, starting with
+      pve02; see the as-built status in `docs/FIRMWARE.md`.)
 
 ## Phase 5 — Cluster
 

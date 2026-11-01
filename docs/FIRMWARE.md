@@ -91,6 +91,37 @@ reachable again before touching the BIOS.
   (`automation/ansible/rolling-update.yml` does this node-serially with
   quorum gates). No separate driver tool is needed on the Proxmox side.
 
+## As-built status — R640 nodes (2026-11-01)
+
+Check-only pass against the Dell catalog on 2026-10-31:
+
+| Component | pve01 | pve02 | Catalog latest |
+|---|---|---|---|
+| BIOS | 2.24.0 | 2.24.0 | 2.29.2 |
+| iDRAC / Lifecycle Controller | 7.00.00.181 | 7.00.00.182 | 7.00.00.185 (final 14G build) |
+| PERC H730 Mini | 25.5.9.0001 | 25.5.9.0001 | 25.5.9.0001 — final release, current |
+| NIC (rNDC) | update offered | update offered | Family 25.0 |
+
+Dell maintains iDRAC9 software for 14G until 2027-02-01. The
+ConnectX-3 40G cards are end-of-life and not catalog-managed.
+
+**Update attempt 2026-10-31 — failed, nothing applied.** Every RACADM
+update job (iDRAC, BIOS, NIC — both nodes) downloaded its package and
+then failed **RED085** at Lifecycle Controller staging (LC log JCP042:
+LC↔CMC communication timeout). A single test job on pve02 after
+soft-resetting both iDRACs failed the same way, so the LC staging path
+itself is wedged — the packages and the HTTP share they were served
+from were hash-verified good. All firmware versions are unchanged;
+nothing is half-applied.
+
+**Agreed next step:** iDRAC-first via the iDRAC WebUI, starting with
+pve02 to 7.00.00.185; BIOS and NIC follow only after the iDRAC update
+lands. Fallback if the WebUI fails the same way: a flea-power drain in
+a maintenance window. iDRAC SSH public-key authentication for `root`
+is configured on both iDRACs (three key slots in use), so RACADM over
+SSH works without a password via the Lenovo hop. pve03 (R440) and
+pbs01 firmware baselines are still owed at their install time.
+
 ## Safety rules
 
 - Stable power for the whole operation; run inside `tmux`/`screen` over SSH.
