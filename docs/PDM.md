@@ -11,7 +11,7 @@ answer-server work (see the note at the bottom).
 |---|---|
 | Name | `pdm01` |
 | Type | VM (official PDM 1.1 ISO, Debian 13 based) |
-| Node | `pve01` (HA enabled — survives a node failure) |
+| Node | `pve02` (HA enabled; live-migrated from pve01 for a host reboot — HA does not fail back) |
 | VMID | `302` |
 | vCPU / RAM / disk | 2 vCPU / 4 GB RAM / 32 GB disk |
 | Network | VLAN 41 (infrastructure services) |
@@ -23,6 +23,10 @@ least-fiddly path, and full virtualization keeps the management plane
 isolated from the cluster hosts it manages. (An LXC with the
 `proxmox-datacenter-manager-container-meta` package is a supported
 lighter alternative if you ever want to trim overhead.)
+
+**As-built (2026-11-01):** VM 302 is deployed and runs PDM 1.1.9 with
+HA enabled, homed on pve02. The PVE cluster remote is added; the
+pbs01 remote waits on PBS (Phase 6).
 
 ## Build order
 

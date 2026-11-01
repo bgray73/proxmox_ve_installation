@@ -11,6 +11,18 @@ This diagram reflects the current planned homelab design:
 - Tailscale subnet-router capability for secure remote management from authorized devices anywhere
 - Traditional VLAN underlay with Proxmox SDN/VXLAN overlay transport on VLAN 100
 
+**As-built note (2026-11-01):** the cluster is two nodes today —
+pve01 + pve02 (PVE 9.2, ZFS RAID1) — with a QDevice on the Lenovo
+G550 (192.168.1.190) for quorum; pve03 and pbs01 are not installed
+yet. Corosync runs on VLAN 20; the dedicated VLAN 21 ring below is
+deferred. The Nexus 40Gb primaries (Eth1/49–50) have no transceivers
+installed, so all server traffic rides the 10Gb failover ports
+(Eth1/15–16). The firewall/router is a UniFi UCG-Fiber (UniFi OS
+5.1.34 / Network 10.6.109; UniFi OS 6 / Network 11 not yet offered —
+Network 11 requires OS 6, so the verdict is wait), and its firewall
+policies are zone-based. A Lenovo-hosted local CA ("Homelab CA")
+fronts the fleet's web UIs through the NPM reverse proxy on VLAN 41.
+
 ![Proxmox homelab logical topology](./proxmox_homelab_logical_topology.svg)
 
 ## VLAN map

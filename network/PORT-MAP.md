@@ -26,6 +26,15 @@ The Nexus carries the 40Gb primary data plane, 10Gb failover, Corosync, PBS back
 > Catalyst BMC numbering (15=PVE01, 16=PVE02, 17=PVE03, 18=PBS01), and a PBS01
 > failover (E1/18) was added — the original design gave PBS01 no 10Gb backup.
 > E1/21–23 are parked UNUSED-SHUT again.
+>
+> **As-built note (2026-11-01):** no transceivers are installed in the
+> QSFP+ primaries E1/49–50 — pve01/pve02 are cabled but dark, and all
+> server traffic rides the 10Gb failovers E1/15–16. E1/47 is the
+> destination of monitor session 1, which mirrors the server failover
+> ports (both directions) to pve01's capture NIC (eno2) and on to the
+> LivePCA VM (VM 303, second vNIC on vmbr1); the mirrored feed is
+> tcpdump-verified. SNMPv2c read-only is enabled on both switches for
+> Scanopy discovery (see `docs/SCANOPY.md`).
 
 ## Cisco Catalyst 2960-X — OOB and 1Gb management
 
