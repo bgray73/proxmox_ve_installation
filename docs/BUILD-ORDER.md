@@ -17,7 +17,13 @@ phase gates the next — do not skip ahead past a verification step.
 
 - [ ] Rack all four nodes per `docs/RACK-LAYOUT.md`; cable power.
 - [ ] Verify UPS/PDU capacity; wire the NUT topology in
-      `docs/POWER-NUT.md` (USB from UPS to pbs01).
+      `docs/POWER-NUT.md`.
+      (As-built change 2026-11-01: the Pi-hole Pi died in October
+      2026, so the NUT master role moved to the Lenovo G550 — configs
+      staged there, services still dark pending the plug/test day.
+      A third UPS, a CyberPower CP1500PFCRM2U, feeds the network
+      chain: wall → UPS → UniFi PDU Pro → network gear. See the
+      as-built note in `docs/POWER-NUT.md`.)
 
 ## Phase 2 — Network
 
@@ -98,8 +104,13 @@ phase gates the next — do not skip ahead past a verification step.
       VM 309 authentik-01; see the fleet table below.)
 - [ ] Wire notifications per `docs/NOTIFICATIONS.md`; confirm a test
       alert reaches your phone.
-      (ntfy push to iPhone verified 2026-10-28 via the Lenovo
-      instance; the Kuma → ntfy notification hookup is unconfirmed.)
+      (As-built: the live alerting path is Uptime Kuma → the Lenovo
+      ntfy, topic `homelab-alerts`; ntfy push to iPhone verified
+      2026-10-28. The Kuma → ntfy hookup was subtly broken — the
+      notification's server URL had the topic appended, so alerts
+      arrived as raw JSON text — and was fixed and verified
+      2026-11-01; see `docs/NOTIFICATIONS.md`. The PVE-native webhook
+      wiring in that doc is not yet the live path.)
 
 ## Phase 9 — Backups and monitoring
 

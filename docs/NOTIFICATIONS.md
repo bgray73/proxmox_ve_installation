@@ -5,6 +5,20 @@ repo deploys via Terraform (currently `10.10.41.14`, VLAN 41). Backup job
 failures, replication errors, and HA/fencing events then arrive as push
 notifications instead of dying in a local mailbox nobody reads.
 
+> **As-built status (2026-11-01):** the live ntfy instance is **not**
+> CT 204 (deployed as a bare OS by choice). It is the ntfy server on
+> the Lenovo terminal server — `http://192.168.1.190:2586`, topic
+> `homelab-alerts` — and it accepts unauthenticated publishes from the
+> fleet VLANs. The alert path proven in production today is **Uptime
+> Kuma (CT 202) → Lenovo ntfy**, covering all 8 Kuma monitors. One
+> hard-won detail: Kuma posts a JSON body to the configured server
+> URL with the topic inside the body, so the URL must be the **bare**
+> server address — appending the topic to the URL makes ntfy store
+> the whole JSON as literal message text (alerts arrived as raw JSON
+> until this was fixed on 2026-11-01). The PVE-native webhook wiring
+> below remains the plan for cluster events; when it is wired, point
+> the target at the Lenovo instance and the `homelab-alerts` topic.
+
 ## How PVE 9 notifications work
 
 Two concepts, both stored cluster-wide in `/etc/pve/notifications.cfg`

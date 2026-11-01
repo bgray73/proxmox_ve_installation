@@ -4,6 +4,17 @@ Reviewable config pack for two CyberPower OR1500LCDRTXL2U units, three PVE
 nodes (pve01/pve02 R640, pve03 R440), and the Supermicro PBS host pbs01.
 Repository changes do not install anything or operate the rack.
 
+> **As-built status (2026-11-01):** the Pi-hole Raspberry Pi that
+> originally held the NUT master role died in October 2026 (failed
+> boot media). The master role moved to the **Lenovo G550 terminal
+> server** (192.168.1.190): configs are installed and staged there,
+> but every NUT service is **disabled** until the plug/test day —
+> nothing is monitored yet, and the shutdown policy below is not
+> live. The server pair is wired wall → UPS → servers. Network gear
+> hangs off a separate CyberPower CP1500PFCRM2U in a short-depth 2U:
+> wall → UPS → UniFi PDU Pro → network gear. Where the runbook below
+> says "the Pi", read "the NUT master host (Lenovo)".
+
 ## Topology and prerequisites
 
 Both USB cables connect to the Pi-hole Raspberry Pi, which runs two usbhid-ups
