@@ -30,11 +30,11 @@ Useful flags: `--pbs-storage ID` (auto-detected when unambiguous),
 
 ## Notifications
 
-Point the script at ntfy (the `ntfy` LXC this repo deploys) to get PASS/FAIL
-push alerts:
+Point the script at ntfy to get PASS/FAIL push alerts. As built, the live
+ntfy is the Lenovo instance (the `ntfy` LXC, CT 204, is bare OS for now):
 
 ```bash
-export NTFY_URL="http://10.10.41.14" NTFY_TOPIC="proxmox-alerts"
+export NTFY_URL="http://192.168.1.190:2586" NTFY_TOPIC="homelab-alerts"
 scripts/pbs_restore_test.sh --mode test --vmid 204 --yes
 ```
 

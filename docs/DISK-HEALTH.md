@@ -5,7 +5,7 @@
 ```bash
 scripts/disk_health.sh --mode check                      # report only (default)
 scripts/disk_health.sh --mode apply --yes \
-  --ntfy-url http://10.10.41.14 --ntfy-topic proxmox-alerts
+  --ntfy-url http://192.168.1.190:2586 --ntfy-topic homelab-alerts
 ```
 
 Check mode exits 1 if anything needs attention, so it is cron-friendly.
