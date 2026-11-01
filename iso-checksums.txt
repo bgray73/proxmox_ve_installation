@@ -17,5 +17,5 @@
 # build_isos.sh FAILS CLOSED: it refuses to build if an entry is missing,
 # still a placeholder, or the ISO's hash does not match. Replace both
 # placeholder lines below before building.
-REPLACE_WITH_64_HEX_CHARS  proxmox-ve_9.0-1.iso
-REPLACE_WITH_64_HEX_CHARS  proxmox-backup-server_4.0-1.iso
+4e88fe416df9b527624a175f24c9aa07c714d3332afb1ee3dbf3879573ef2c6c  proxmox-ve_9.2-1.iso
+2fb299deac3929253712c9c3dfc9237edbe70af83c8848467616b771a1d5453e  proxmox-backup-server_4.2-1.iso
