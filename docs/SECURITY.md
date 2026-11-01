@@ -1,5 +1,18 @@
 # Node security baseline
 
+> **Fleet CVE watch (as-built 2026-11-01):** a daily watch
+> cross-checks new CISA KEV entries against the fleet inventory and
+> reports only CVEs that plausibly apply to a fleet device, verifying
+> live patch state on a match. Current state: **CVE-2026-98432 is
+> fixed** in the running kernel (7.0.14-26-pve) on both PVE nodes and
+> pdm01. MPTCP is disabled on both nodes
+> (`/etc/sysctl.d/99-disable-mptcp.conf`) as a partial mitigation
+> only — the kernel fix is what closes the CVE. Fragnesia
+> (CVE-2026-46300) is fixed in all running kernels, and there is no
+> PHP anywhere in the fleet (the PHP2Shell CVEs do not apply). The
+> Ubuntu guests still await Ubuntu's own fixed kernel for
+> CVE-2026-98432 and are not inbound-exposed.
+
 Five controls, in this order, on all four nodes (`pve01`–`pve03`, `pbs01`).
 Do them in one sitting per node so nothing is left half-applied. TOTP is
 cluster-wide for PVE — enroll once, it covers all three nodes.

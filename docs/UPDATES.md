@@ -6,15 +6,18 @@ Routine patching, node by node, without losing quorum or guests. Budget
 
 ## 1. Pre-flight (from any PVE node)
 
-- [ ] Quorum healthy: `pvecm status` shows 3 nodes, `Quorate: Yes`.
+- [ ] Quorum healthy: `pvecm status` shows both nodes plus the
+      QDevice, `Quorate: Yes`. (As-built: 2-node cluster + QDevice;
+      reads 3 nodes once pve03 joins.)
 - [ ] Last night's backups are green (PBS web UI, or on pbs01:
       `proxmox-backup-manager task list --limit 20`).
 - [ ] Nothing running right now: no backup, restore, PBS verify/GC, or ZFS
       scrub in progress (`zpool status` on each node shows no scrub).
 - [ ] HA guests noted: `ha-manager status` (only if HA is enabled via
       `automation/terraform/ha.tf`).
-- [ ] UPS sane: `upsc <ups-name> ups.status` on pbs01 shows `OL`
-      (on line) — not `OB` or `LB`. See `docs/POWER-NUT.md`.
+- [ ] UPS sane: units on line power, not on battery. (NUT monitoring
+      is still staged dark — once it is live this becomes an `upsc`
+      check against the Lenovo master. See `docs/POWER-NUT.md`.)
 - [ ] No storm in the forecast. Do not start a patch window you can't finish.
 
 ## 2. Check the apt repos before you touch anything
@@ -72,8 +75,9 @@ After it comes back:
 
 ## 4. PVE nodes, strictly one at a time
 
-Repeat this block for pve01, then pve02, then pve03. Never start the
-next node until the current one is fully back and quorate.
+Repeat this block for pve01, then pve02 (and pve03 once installed).
+Never start the next node until the current one is fully back and
+quorate.
 
 ```bash
 NODE=pve01   # then pve02, then pve03
@@ -108,24 +112,26 @@ reboot
 - [ ] Guests are where you expect them (migrate any back if you care
       about placement: `qm migrate <vmid> $NODE --online`).
 
-**If a node doesn't come back:** with 2 of 3 nodes up you still have
-quorum, so don't panic. Check iDRAC console, confirm the corosync link
-(VLAN 21) is up, and read `journalctl -u corosync -u pve-cluster` on the
-sick node. Do **not** run `pvecm expected 1` unless you are certain the
-third node is truly dead and you accept the split-brain risk. If the
-node is unrecoverable, the rebuild path is `docs/DISASTER-RECOVERY.md`.
+**If a node doesn't come back:** with the other node plus the QDevice
+up you still have quorum, so don't panic. Check iDRAC console, confirm
+the corosync link (VLAN 20 as-built) is up, and read
+`journalctl -u corosync -u pve-cluster` on the sick node. Do **not**
+run `pvecm expected 1` unless you are certain the third node is truly
+dead and you accept the split-brain risk. If the node is
+unrecoverable, the rebuild path is `docs/DISASTER-RECOVERY.md`.
 
 ## 5. Post-flight
 
-- [ ] `pvecm status`: 3 nodes, quorate. `pveversion` consistent everywhere.
+- [ ] `pvecm status`: all nodes + QDevice, quorate. `pveversion`
+      consistent everywhere.
 - [ ] Backup jobs still scheduled: Datacenter → Backup shows the expected
       jobs (schedules live in cluster config and must be re-created after
       any rebuild — see `docs/DISASTER-RECOVERY.md`).
 - [ ] One manual backup to prove the pipeline: from any PVE node,
       `vzdump <vmid> --storage pbs --mode snapshot`, then confirm it
       lands in the PBS datastore.
-- [ ] ntfy still flows: `curl -d "patch window complete" http://10.10.41.14/proxmox-alerts`
-      (topic per `docs/NOTIFICATIONS.md`).
+- [ ] ntfy still flows: `curl -d "patch window complete" http://192.168.1.190:2586/homelab-alerts`
+      (the live ntfy is the Lenovo instance — see `docs/NOTIFICATIONS.md`).
 - [ ] Optional cleanup on each node: `apt autoremove` (old kernels eat
       `/boot` over time).
 
