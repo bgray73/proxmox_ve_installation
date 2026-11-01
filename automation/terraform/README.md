@@ -18,14 +18,20 @@ provider. Compatible with both Terraform and OpenTofu.
 | pdm01         | VM   | pve02 | 302  | 10.10.41.22   | Proxmox Datacenter Manager (HA)      |
 | livepca-01    | VM   | pve01 | 303  | DHCP (.129)   | LivePCA capture appliance (not Terraform-managed) |
 | trex-01       | VM   | pve02 | 304  | 10.10.41.23   | Traffic generator (not Terraform-managed) |
+| scanopy-01    | VM   | pve02 | 305  | 10.10.41.25   | Scanopy network discovery (not Terraform-managed) |
+| vault-01      | VM   | pve01 | 306  | 10.10.41.26   | Vaultwarden (not Terraform-managed) |
+| livenx-01     | VM   | pve01 | 307  | DHCP (.247)   | LiveNX server (not Terraform-managed) |
+| homeassistant-01 | VM | pve02 | 308  | DHCP (.120)   | Home Assistant OS (not Terraform-managed) |
+| authentik-01  | VM   | pve02 | 309  | 10.10.41.28   | Authentik SSO (not Terraform-managed) |
 
-**As-built status (2026-10-30):** every guest above is deployed and
-running. The fleet was built directly on the cluster (not via
+**As-built status (2026-11-01):** every guest above is deployed;
+VM 304 trex-01 is deliberately manual-start (traffic generation
+parked). The fleet was built directly on the cluster (not via
 `tofu apply`) to this spec, with two placement changes from the
 original plan — uptime and pdm01 live on pve02, docker on pve01 —
 because pve03 is not installed yet. CT 204 runs as a bare OS by
 choice; the live ntfy instance is on the Lenovo terminal server.
-VMs 303/304 were added outside this plan and are not managed here.
+VMs 303–309 were added outside this plan and are not managed here.
 
 All guests sit on the infra VLAN (41, `10.10.41.0/24`), get static
 IPs, have your SSH key injected, and start in dependency order (DNS first).

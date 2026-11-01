@@ -88,8 +88,10 @@ phase gates the next — do not skip ahead past a verification step.
       (All deployed and running 2026-10-30 — built directly, not via
       terraform apply; as-built node placements are in the terraform
       README table. CT 204 ntfy is a bare OS by choice — the Lenovo
-      ntfy is the live instance. Two guests beyond the original plan:
-      VM 303 livepca-01 and VM 304 trex-01; see the fleet table below.)
+      ntfy is the live instance. Seven guests beyond the original plan
+      followed: VM 303 livepca-01, VM 304 trex-01, VM 305 scanopy-01,
+      VM 306 vault-01, VM 307 livenx-01, VM 308 homeassistant-01, and
+      VM 309 authentik-01; see the fleet table below.)
 - [ ] Wire notifications per `docs/NOTIFICATIONS.md`; confirm a test
       alert reaches your phone.
       (ntfy push to iPhone verified 2026-10-28 via the Lenovo
@@ -128,25 +130,43 @@ phase gates the next — do not skip ahead past a verification step.
       re-test after replication is configured is still owed.)
 - [ ] Record results; open issues for anything that surprised you.
 
-## As-built fleet status (verified live 2026-10-30)
+## As-built fleet status (verified live 2026-11-01)
 
 | VMID | Name          | Type | Node  | IP                | Status |
 |------|---------------|------|-------|-------------------|--------|
 | 200  | adguard       | CT   | pve01 | 10.10.41.10       | running |
 | 204  | ntfy          | CT   | pve01 | 10.10.41.14       | running (bare OS — Lenovo ntfy is the live one) |
-| 301  | docker-01     | VM   | pve01 | 10.10.41.21       | running |
+| 301  | docker-01     | VM   | pve01 | 10.10.41.21       | running (Scrypted :10443, Ring plugin not configured; SentinelLab test deploy :4100, wired live to the cluster API) |
 | 303  | livepca-01    | VM   | pve01 | DHCP (.129)       | running — licensed, capturing the Nexus SPAN feed |
 | 201  | proxy (NPM)   | CT   | pve02 | 10.10.41.11       | running |
-| 202  | uptime (Kuma) | CT   | pve02 | 10.10.41.12       | running |
+| 202  | uptime (Kuma) | CT   | pve02 | 10.10.41.12       | running (Kuma 2.5.8, 8 monitors; alerts → Lenovo ntfy) |
 | 203  | semaphore     | CT   | pve02 | 10.10.41.13       | running |
-| 300  | observability | VM   | pve02 | 10.10.41.20       | running |
-| 302  | pdm01         | VM   | pve02 | 10.10.41.22       | running (HA) |
-| 304  | trex-01       | VM   | pve02 | 10.10.41.23       | running (rebuilt 2026-10-30; traffic gen via kernel tools — DPDK passthrough parked) |
-| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (first discovery complete) |
+| 300  | observability | VM   | pve02 | 10.10.41.20       | running (Grafana/Prometheus/Loki; PVE exporter covers both nodes) |
+| 302  | pdm01         | VM   | pve02 | 10.10.41.22       | running (PDM 1.1.9, HA; homed on pve02 — HA does not fail back) |
+| 304  | trex-01       | VM   | pve02 | 10.10.41.23       | manual start (onboot=0 by design; rebuilt vanilla 2026-10-30 — DPDK passthrough parked after host DMAR faults, traffic generation paused) |
+| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (first discovery complete: 12 hosts, 0 warnings — see `docs/SCANOPY.md`) |
 | 306  | vault-01      | VM   | pve01 | 10.10.41.26       | running (Vaultwarden; HA + 15-min replication to pve02) |
 | 307  | livenx-01     | VM   | pve01 | DHCP (.247)       | running (LiveNX server 26.2.2; not yet licensed) |
 | 308  | homeassistant-01 | VM | pve02 | DHCP (.120)       | running (Home Assistant OS 18.4; onboarding pending) |
 | 309  | authentik-01  | VM   | pve02 | 10.10.41.28       | running (Authentik 2026.8.5; initial admin setup pending) |
+
+Power-recovery boot order for all 15 guests was applied and verified
+2026-10-31 — VM 309's missing `onboot` flag was found and fixed in the
+process; VM 304 is deliberately manual-start. CT 201 fronts 9 NPM proxy
+hosts behind the local Homelab CA (the serving cert carries the 9
+service names as explicit SANs — a bare wildcard was rejected), and
+AdGuard holds the matching 9 DNS rewrites; `.homelab` names resolve
+only for AdGuard-DNS clients (house DHCP still hands out public
+resolvers).
+
+Authentik (VM 309) is the agreed SSO direction for the web UIs —
+native OIDC for PVE (both nodes), PDM, and Grafana; NPM proxy-outpost
+gating for Kuma, Scanopy, SentinelLab, Scrypted, and the NPM admin;
+native auth stays for Home Assistant, Vaultwarden, LiveNX/LivePCA, and
+UniFi. The wiring is **not done yet**: it waits on the initial
+Authentik admin setup, a 13-SAN Homelab CA reissue, and the matching
+NPM hosts + AdGuard rewrites for vault/scrypted/sentinel/scanopy/
+authentik.
 
 Still to deploy: **pve03** (node install, needs a second SSD) and
 **pbs01 / PBS** (Phase 6 — 9300-8i HBA swap first), then the PDM→pbs01
