@@ -199,7 +199,8 @@ Run the table once per node. When every row is green, the baseline is done.
   LivePCA (LiveWire) SAML was built the same day (provider `livepca`;
   a `LiveWire_Roles` property mapping emits `Administrator` for
   akadmin/bgray/Admins; LiveWire's ACL Administrator role lists
-  admin, akadmin, bgray); final login verification is pending.
+  admin, akadmin, bgray); SSO login verified working by Brett on
+  2026-11-03 after the `name_id_mapping` fix below.
   Runbook lesson: a newly created SAML provider must copy
   `name_id_mapping` (the Username mapping) — the default sends an
   opaque ID that SPs matching users by name reject (LiveWire
