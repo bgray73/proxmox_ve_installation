@@ -57,8 +57,9 @@ phase gates the next — do not skip ahead past a verification step.
       (Tracked separately as the Isaac firmware/driver update goal.
       Check-only pass done 2026-10-31; the first update attempt
       failed at Lifecycle Controller staging — RED085 — with nothing
-      applied. Next step is iDRAC-first via the WebUI, starting with
-      pve02; see the as-built status in `docs/FIRMWARE.md`.)
+      applied. Completed 2026-11-03, iDRAC-first via the WebUI: both
+      R640 nodes now run iDRAC 7.00.00.185, BIOS 2.29.2, and NIC
+      25.0; see the as-built status in `docs/FIRMWARE.md`.)
 
 ## Phase 5 — Cluster
 
@@ -149,43 +150,51 @@ phase gates the next — do not skip ahead past a verification step.
       re-test after replication is configured is still owed.)
 - [ ] Record results; open issues for anything that surprised you.
 
-## As-built fleet status (verified live 2026-11-01)
+## As-built fleet status (verified live 2026-11-04)
+
+Cluster `homelab`: pve01 (10.10.20.11, 64 GB, UEFI) + pve02
+(10.10.20.12, 128 GB, Legacy), PVE 9.2 / ZFS RAID1, QDevice on the
+Lenovo (192.168.1.190). Placement settled with no failback after the
+2026-11-03 firmware windows — pve02 carries most guests.
 
 | VMID | Name          | Type | Node  | IP                | Status |
 |------|---------------|------|-------|-------------------|--------|
-| 200  | adguard       | CT   | pve01 | 10.10.41.10       | running |
+| 200  | adguard       | CT   | pve02 | 10.10.41.10       | running (HA) |
+| 201  | proxy (NPM)   | CT   | pve02 | 10.10.41.11       | running (HA; 17 proxy hosts behind the Homelab CA) |
+| 202  | uptime (Kuma) | CT   | pve02 | 10.10.41.12       | running (Kuma 2.5.9, 2048 MB, 24 monitors + 4 groups; alerts → Lenovo ntfy) |
+| 203  | semaphore     | CT   | pve02 | 10.10.41.13       | running (Semaphore 2.19.17) |
 | 204  | ntfy          | CT   | pve01 | 10.10.41.14       | running (bare OS — Lenovo ntfy is the live one) |
-| 301  | docker-01     | VM   | pve01 | 10.10.41.21       | running (Scrypted :10443, Ring plugin not configured; SentinelLab test deploy :4100, wired live to the cluster API) |
-| 303  | livepca-01    | VM   | pve01 | DHCP (.129)       | running — licensed, capturing the Nexus SPAN feed |
-| 201  | proxy (NPM)   | CT   | pve02 | 10.10.41.11       | running |
-| 202  | uptime (Kuma) | CT   | pve02 | 10.10.41.12       | running (Kuma 2.5.8, 8 monitors; alerts → Lenovo ntfy) |
-| 203  | semaphore     | CT   | pve02 | 10.10.41.13       | running |
+| 205  | tacacs-01     | CT   | pve02 | 10.10.41.15       | running (tac_plus; both switches + LiveNX authenticate against it) |
+| 206  | paperless-01  | CT   | pve02 | 10.10.41.16       | running (Paperless-ngx on PostgreSQL 18.6 + Redis 8; archive still empty) |
+| 207  | scrutiny-01   | CT   | pve02 | 10.10.41.17       | running (Scrutiny hub 0.10.0; collectors on both PVE hosts) |
 | 300  | observability | VM   | pve02 | 10.10.41.20       | running (Grafana/Prometheus/Loki; PVE exporter covers both nodes) |
-| 302  | pdm01         | VM   | pve02 | 10.10.41.22       | running (PDM 1.1.9, HA; homed on pve02 — HA does not fail back) |
-| 304  | trex-01       | VM   | pve02 | 10.10.41.23       | manual start (onboot=0 by design; rebuilt vanilla 2026-10-30 — DPDK passthrough parked after host DMAR faults, traffic generation paused) |
-| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (first discovery complete: 12 hosts, 0 warnings — see `docs/SCANOPY.md`) |
-| 306  | vault-01      | VM   | pve01 | 10.10.41.26       | running (Vaultwarden; HA + 15-min replication to pve02) |
-| 307  | livenx-01     | VM   | pve01 | DHCP (.247)       | running (LiveNX server 26.2.2; not yet licensed) |
-| 308  | homeassistant-01 | VM | pve02 | DHCP (.120)       | running (Home Assistant OS 18.4; onboarding pending) |
-| 309  | authentik-01  | VM   | pve02 | 10.10.41.28       | running (Authentik 2026.8.5; initial admin setup pending) |
+| 301  | docker-01     | VM   | pve01 | 10.10.41.21       | running (Homepage :3000, What's Up Docker :3001, SentinelLab :4100, Scrypted :10443 — Ring plugin not configured) |
+| 302  | pdm01         | VM   | pve02 | 10.10.41.22       | running (PDM 1.1, HA; homed on pve02 — HA does not fail back) |
+| 303  | livepca-01    | VM   | pve01 | 10.10.41.24       | running — licensed (LiveWire 26.2.2); capture feed dark — Nexus monitor session admin-shut since 2026-11-02 |
+| 304  | trex-01       | VM   | pve02 | 10.10.41.23       | parked (onboot=0 by design; rebuilt vanilla 2026-10-30 — DPDK passthrough parked after host DMAR faults, traffic generation paused) |
+| 305  | scanopy-01    | VM   | pve02 | 10.10.41.25       | running (Scanopy 0.19.5 — see `docs/SCANOPY.md`) |
+| 306  | vault-01      | VM   | pve02 | 10.10.41.26       | running (Vaultwarden; HA + 15-min replication) |
+| 307  | livenx-01     | VM   | pve01 | 10.10.41.27       | running (LiveNX server 26.2.2, licensed) |
+| 308  | homeassistant-01 | VM | pve02 | DHCP (.120)       | running (Home Assistant OS 18.4; Core serves on port 80) |
+| 309  | authentik-01  | VM   | pve02 | 10.10.41.28       | running (Authentik 2026.8.5 on PostgreSQL 18.6, HA; SSO live — see below) |
 
-Power-recovery boot order for all 15 guests was applied and verified
-2026-10-31 — VM 309's missing `onboot` flag was found and fixed in the
-process; VM 304 is deliberately manual-start. CT 201 fronts 9 NPM proxy
-hosts behind the local Homelab CA (the serving cert carries the 9
-service names as explicit SANs — a bare wildcard was rejected), and
-AdGuard holds the matching 9 DNS rewrites; `.homelab` names resolve
-only for AdGuard-DNS clients (house DHCP still hands out public
-resolvers).
+Power-recovery boot order for the original 15 guests was applied
+and verified 2026-10-31 — VM 309's missing `onboot` flag was found
+and fixed in the process; VM 304 is deliberately manual-start.
+CT 201 fronts 17 NPM proxy hosts behind the local Homelab CA (the
+serving cert, v8, carries 20 service names as explicit SANs — a bare
+wildcard was rejected), and AdGuard holds the matching 20 DNS
+rewrites; `.homelab` names resolve only for AdGuard-DNS clients
+(house DHCP still hands out public resolvers).
 
-Authentik (VM 309) is the agreed SSO direction for the web UIs —
-native OIDC for PVE (both nodes), PDM, and Grafana; NPM proxy-outpost
-gating for Kuma, Scanopy, SentinelLab, Scrypted, and the NPM admin;
-native auth stays for Home Assistant, Vaultwarden, LiveNX/LivePCA, and
-UniFi. The wiring is **not done yet**: it waits on the initial
-Authentik admin setup, a 13-SAN Homelab CA reissue, and the matching
-NPM hosts + AdGuard rewrites for vault/scrypted/sentinel/scanopy/
-authentik.
+Authentik (VM 309) is the fleet's SSO front door, and the wiring is
+done: native OIDC for PVE, PDM, Grafana, What's Up Docker, and
+Paperless; NPM forward-auth gating for Uptime Kuma, Scanopy,
+SentinelLab, Scrypted, the NPM admin, Homepage, and Scrutiny; SAML
+for LiveNX and LivePCA. Native auth stays for Home Assistant,
+Vaultwarden, and UniFi. `akadmin` is the break-glass identity,
+`bgray` the everyday admin; see `docs/SECURITY.md` for the as-built
+detail.
 
 Still to deploy: **pve03** (node install, needs a second SSD) and
 **pbs01 / PBS** (Phase 6 — 9300-8i HBA swap first), then the PDM→pbs01

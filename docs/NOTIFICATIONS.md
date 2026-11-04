@@ -10,7 +10,8 @@ notifications instead of dying in a local mailbox nobody reads.
 > the Lenovo terminal server — `http://192.168.1.190:2586`, topic
 > `homelab-alerts` — and it accepts unauthenticated publishes from the
 > fleet VLANs. The alert path proven in production today is **Uptime
-> Kuma (CT 202) → Lenovo ntfy**, covering all 8 Kuma monitors. One
+> Kuma (CT 202) → Lenovo ntfy**, covering Kuma's monitors — 24 real
+> plus 4 group monitors as of 2026-11-04 (see the update below). One
 > hard-won detail: Kuma posts a JSON body to the configured server
 > URL with the topic inside the body, so the URL must be the **bare**
 > server address — appending the topic to the URL makes ntfy store

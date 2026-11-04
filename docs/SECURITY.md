@@ -247,7 +247,8 @@ Run the table once per node. When every row is green, the baseline is done.
   2026-11-04 its output landed in a chat log; the owner was informed
   the same turn and elected to keep the existing secrets.)
 - **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
-  Docker compose with PostgreSQL 16 + Redis; native OIDC via allauth
+  Docker compose with PostgreSQL 18.6 + Redis 8 (upgraded
+  2026-11-04 — see `docs/DB-MAJOR-UPGRADES.md`); native OIDC via allauth
   since 2026-11-04), What's Up Docker on docker-01 (VM 301; image-update
   monitoring for every fleet Docker host via read-only socket-proxy
   sidecars, native ntfy trigger — delivery live since the 2026-11-04
