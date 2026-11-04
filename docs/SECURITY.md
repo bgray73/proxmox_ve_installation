@@ -168,11 +168,13 @@ Run the table once per node. When every row is green, the baseline is done.
   valid to 2036-10-27). Leaf lifetime is ~825 days; the current fleet
   leaves all expire **2029-02-05**, so they come due together.
 - NPM (CT 201) serves one custom certificate for all its proxy hosts —
-  currently **v5, 17 explicit SANs**. A `*.homelab` wildcard does NOT
-  validate for two-label names, so every served name must be listed
-  explicitly. Swap in place at
-  `/opt/npm/data/custom_ssl/npm-1/fullchain.pem` (same key, new CSR
-  signed by the CA) and reload nginx.
+  currently **v7, 19 explicit SANs** (v6 added `paperless.homelab`,
+  v7 added `scrutiny.homelab`, both 2026-11-03). A `*.homelab`
+  wildcard does NOT validate for two-label names, so every served
+  name must be listed explicitly. Swap in place at
+  `/opt/npm/data/custom_ssl/npm-1/` (new key + CSR signed by the CA;
+  replace `fullchain.pem` and `privkey.pem`, keep the previous pair
+  as `.bak-v<n>`) and restart the NPM container.
 - **iDRACs** serve CA certificates for `idrac-pve01.homelab` /
   `idrac-pve02.homelab`, installed via the on-box CSR flow — the only
   reliable path on iDRAC9 FW 7.x: iDRAC Settings -> Services -> Web
@@ -205,3 +207,27 @@ Run the table once per node. When every row is green, the baseline is done.
   `name_id_mapping` (the Username mapping) — the default sends an
   opaque ID that SPs matching users by name reject (LiveWire
   answered its ACS with 401 until this was set).
+- **TACACS+ (server built 2026-11-03, switch wiring pending).** CT 205
+  `tacacs-01` (10.10.41.15) — the fleet's only Ubuntu 24.04 container,
+  because Debian 13 and current Ubuntu both dropped the `tacacs+`
+  package; it runs tac_plus F4.0.4.32 built from the shrubbery source
+  under a systemd unit. `/etc/tac_plus.conf` (mode 600) holds
+  per-switch host keys (Nexus 10.10.50.26, Catalyst 10.10.10.2), a
+  `netadmin` group (exec priv-lvl 15, `shell:roles="network-admin"`),
+  and the sole user `bgray`; the keys and password live only in the
+  container's `/root/tacacs-secrets.txt`. Switch AAA is NOT yet
+  pointed at it — that waits on UniFi allows for TCP 49 from the two
+  switch networks, then AAA config with local fallback, tested in a
+  second session before the first closes.
+- **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
+  Docker compose with PostgreSQL 16 + Redis; native-login tier like
+  Vaultwarden), Diun on docker-01 (daily image-update checks, webhook
+  to the Lenovo ntfy — delivery waits on a VLAN 41 → 192.168.1.190:2586
+  UniFi allow), and Scrutiny (hub CT 207, 10.10.41.17, image pinned to
+  `v0.10.0-omnibus` — the `master-omnibus` tag is a stale dev-0.8.2
+  build that breaks collector association; collectors on both PVE
+  hosts read the physical SSDs via PERC megaraid passthrough on a
+  15-minute systemd timer). NPM proxy hosts for `paperless.homelab`
+  and `scrutiny.homelab` are still to be added (cert v7, AdGuard
+  rewrites, and Homepage tiles are already in place; Scrutiny gets an
+  Authentik proxy gate, as it has no native auth).

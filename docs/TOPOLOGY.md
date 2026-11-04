@@ -31,6 +31,14 @@ The HA set is ct:200, ct:201, vm:302, vm:306, vm:309, each with a
 holds 17 DNS rewrites: 13 names to NPM (10.10.41.11), the iDRAC pair
 direct to 10.10.10.11/.12, and livenx/livepca direct to their apps.
 
+**Update (2026-11-03, evening):** three more containers on pve02 —
+CT 205 `tacacs-01` (10.10.41.15, TACACS+ server; Ubuntu 24.04, the
+fleet's only non-Debian guest), CT 206 `paperless-01` (10.10.41.16,
+Paperless-ngx), CT 207 `scrutiny-01` (10.10.41.17, Scrutiny hub;
+collectors run on both PVE hosts). AdGuard now holds 19 rewrites
+(15 to NPM). Diun image-update monitoring runs as a container on
+docker-01 (VM 301).
+
 ![Proxmox homelab logical topology](./proxmox_homelab_logical_topology.svg)
 
 ## VLAN map
