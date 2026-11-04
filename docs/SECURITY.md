@@ -168,8 +168,8 @@ Run the table once per node. When every row is green, the baseline is done.
   valid to 2036-10-27). Leaf lifetime is ~825 days; the current fleet
   leaves all expire **2029-02-05**, so they come due together.
 - NPM (CT 201) serves one custom certificate for all its proxy hosts —
-  currently **v7, 19 explicit SANs** (v6 added `paperless.homelab`,
-  v7 added `scrutiny.homelab`, both 2026-11-03). A `*.homelab`
+  currently **v8, 20 explicit SANs** (v6 added `paperless.homelab`,
+  v7 added `scrutiny.homelab`, v8 added `wud.homelab`, all 2026-11-03). A `*.homelab`
   wildcard does NOT validate for two-label names, so every served
   name must be listed explicitly. Swap in place at
   `/opt/npm/data/custom_ssl/npm-1/` (new key + CSR signed by the CA;
@@ -221,13 +221,16 @@ Run the table once per node. When every row is green, the baseline is done.
   second session before the first closes.
 - **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
   Docker compose with PostgreSQL 16 + Redis; native-login tier like
-  Vaultwarden), Diun on docker-01 (daily image-update checks, webhook
-  to the Lenovo ntfy — delivery waits on a VLAN 41 → 192.168.1.190:2586
-  UniFi allow), and Scrutiny (hub CT 207, 10.10.41.17, image pinned to
+  Vaultwarden), What's Up Docker on docker-01 (VM 301; image-update
+  monitoring for every fleet Docker host via read-only socket-proxy
+  sidecars, native ntfy trigger — delivery waits on a VLAN 41 →
+  192.168.1.190:2586 UniFi allow; Diun was deployed first and swapped
+  out for WUD the same evening at the owner's pick), and Scrutiny
+  (hub CT 207, 10.10.41.17, image pinned to
   `v0.10.0-omnibus` — the `master-omnibus` tag is a stale dev-0.8.2
   build that breaks collector association; collectors on both PVE
   hosts read the physical SSDs via PERC megaraid passthrough on a
-  15-minute systemd timer). NPM proxy hosts for `paperless.homelab`
-  and `scrutiny.homelab` are still to be added (cert v7, AdGuard
-  rewrites, and Homepage tiles are already in place; Scrutiny gets an
+  15-minute systemd timer). NPM proxy hosts for `paperless.homelab`,
+  `scrutiny.homelab`, and `wud.homelab` are still to be added (cert v8,
+  AdGuard rewrites, and Homepage tiles are already in place; Scrutiny gets an
   Authentik proxy gate, as it has no native auth).

@@ -35,9 +35,10 @@ direct to 10.10.10.11/.12, and livenx/livepca direct to their apps.
 CT 205 `tacacs-01` (10.10.41.15, TACACS+ server; Ubuntu 24.04, the
 fleet's only non-Debian guest), CT 206 `paperless-01` (10.10.41.16,
 Paperless-ngx), CT 207 `scrutiny-01` (10.10.41.17, Scrutiny hub;
-collectors run on both PVE hosts). AdGuard now holds 19 rewrites
-(15 to NPM). Diun image-update monitoring runs as a container on
-docker-01 (VM 301).
+collectors run on both PVE hosts). AdGuard now holds 20 rewrites
+(16 to NPM). What's Up Docker image-update monitoring runs as a
+container on docker-01 (VM 301), watching all seven fleet Docker
+hosts through read-only socket-proxy sidecars.
 
 ![Proxmox homelab logical topology](./proxmox_homelab_logical_topology.svg)
 
