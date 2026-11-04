@@ -207,24 +207,35 @@ Run the table once per node. When every row is green, the baseline is done.
   `name_id_mapping` (the Username mapping) — the default sends an
   opaque ID that SPs matching users by name reject (LiveWire
   answered its ACS with 401 until this was set).
-- **TACACS+ (server built 2026-11-03, switch wiring pending).** CT 205
-  `tacacs-01` (10.10.41.15) — the fleet's only Ubuntu 24.04 container,
-  because Debian 13 and current Ubuntu both dropped the `tacacs+`
-  package; it runs tac_plus F4.0.4.32 built from the shrubbery source
-  under a systemd unit. `/etc/tac_plus.conf` (mode 600) holds
-  per-switch host keys (Nexus 10.10.50.26, Catalyst 10.10.10.2), a
-  `netadmin` group (exec priv-lvl 15, `shell:roles="network-admin"`),
-  and the sole user `bgray`; the keys and password live only in the
-  container's `/root/tacacs-secrets.txt`. Switch AAA is NOT yet
-  pointed at it — that waits on UniFi allows for TCP 49 from the two
-  switch networks, then AAA config with local fallback, tested in a
-  second session before the first closes.
+- **TACACS+ (server built 2026-11-03; switch AAA wired and verified
+  2026-11-04).** CT 205 `tacacs-01` (10.10.41.15) — the fleet's only
+  Ubuntu 24.04 container, because Debian 13 and current Ubuntu both
+  dropped the `tacacs+` package; it runs tac_plus F4.0.4.32 built from
+  the shrubbery source under a systemd unit. `/etc/tac_plus.conf`
+  (mode 600) holds per-switch host keys (Nexus 10.10.50.26, Catalyst
+  10.10.10.2 — both rotated 2026-11-04 after the originals echoed in
+  diagnostic output), groups `netadmin`/`netops` (exec priv-lvl 15
+  only), and users `bgray`, `gopherops`, `admin`, `livenx`; the keys
+  and passwords live only in the container's
+  `/root/tacacs-secrets.txt`. Both switches authenticate VTY logins
+  against it with local fallback, with exec/command accounting; the
+  Catalyst console keeps its pre-AAA posture via a named `CONSOLE`
+  list (local). Three implementation lessons, all learned live:
+  tac_plus keeps PAP passwords separate from login passwords (every
+  user needs a `pap = cleartext` line next to `login =`, or switch
+  logins fail despite clean packet decryption); NX-OS AAA method
+  lists take no trailing `local` (it is parsed as a group name —
+  local fallback on server error is a separate default-on toggle,
+  and NX-OS has no `aaa authorization exec` line, taking the role
+  from the matching local account); and the `shell:roles` av-pair
+  must not be sent to IOS, which fails authorization on it even when
+  the server accepts — exec profiles therefore carry priv-lvl only.
 - **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
   Docker compose with PostgreSQL 16 + Redis; native OIDC via allauth
   since 2026-11-04), What's Up Docker on docker-01 (VM 301; image-update
   monitoring for every fleet Docker host via read-only socket-proxy
-  sidecars, native ntfy trigger — delivery waits on a VLAN 41 →
-  192.168.1.190:2586 UniFi allow; Diun was deployed first and swapped
+  sidecars, native ntfy trigger — delivery live since the 2026-11-04
+  UniFi allow for VLAN 41 → 192.168.1.190:2586; Diun was deployed first and swapped
   out for WUD the same evening at the owner's pick), and Scrutiny
   Both Paperless and WUD got native Authentik OIDC on 2026-11-04
   (providers/apps `paperless` and `wud`; a standard OpenID `groups`
