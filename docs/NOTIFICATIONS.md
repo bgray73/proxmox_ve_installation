@@ -19,6 +19,32 @@ notifications instead of dying in a local mailbox nobody reads.
 > below remains the plan for cluster events; when it is wired, point
 > the target at the Lenovo instance and the `homelab-alerts` topic.
 
+**Update (2026-11-04):** Kuma's coverage grew from the original 9
+monitors to **24 real monitors plus 4 group monitors** (Hypervisors,
+Network, Core Services, Applications — every real monitor sits in a
+group), all tied to the same ntfy notification and all verified UP.
+Added: Authentik, Vaultwarden, Scanopy, Paperless, Scrutiny,
+Prometheus, Homepage, What's Up Docker, Home Assistant, a Kuma
+self-check, Scrypted, LiveNX, LivePCA, TACACS as a TCP port check on
+10.10.41.15:49, and the Hue Bridge (10.10.50.160). Two operational
+notes. First, Kuma is a native git-checkout install, so an update
+is: check out the new tag, run a FULL `npm ci`, then
+`npm run build`, then restart — skipping the build leaves the old
+frontend served against the new backend (the 2.5.9 bump showed a
+version-mismatch banner, websocket errors, and blank settings pages
+until the frontend was rebuilt); CT 202's RAM was raised
+512 MB → 2048 MB because the vite build runs out of memory at
+512 MB. Second, the remaining blind spot: Kuma sits on VLAN 41 and
+cannot watch VLAN 10 — the two UniFi policies created for
+Kuma → infrastructure targets pass TCP to VLAN 50 (the Hue monitor
+works through them), but ICMP passes nothing and VLAN 10 targets do
+not answer even on 443; still open are the Ping policy's protocol
+field and whether VLAN 10 lives in UniFi's OOB zone rather than
+Internal. The UniFi PDU Pro turned out to be at 192.168.0.200 on
+the house LAN (not VLAN 50, as once assumed) and is not monitorable
+from Kuma: it answers ping only on its own subnet and has no web
+UI listening.
+
 ## How PVE 9 notifications work
 
 Two concepts, both stored cluster-wide in `/etc/pve/notifications.cfg`

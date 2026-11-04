@@ -48,6 +48,43 @@ Open `http://<scanopy-vm-ip>:60072` from the management network and create the i
 
 A network scan does not reveal front/rear U placement, patch-panel position, UPS feed, PDU outlet or power-cord destination. Maintain those fields in [RACK-LAYOUT.md](RACK-LAYOUT.md), and verify them physically. A discovered cable-level connection is evidence of observed topology, not proof that the proposed rack plan was installed.
 
+## As-built updates (2026-11-04)
+
+- **Proxmox discovery phantom-IP bug.** Full scans rebind the
+  pve01/pve02 host entities to stale UniFi client addresses on
+  VLAN 50 — 10.10.50.139 (pve01) and 10.10.50.228 (pve02), each
+  paired with the host's correct eno1 MAC; neither address exists
+  on the hosts (each node has exactly one IPv4, 10.10.20.11/.12).
+  The Proxmox API credential was consequently reported "never
+  contacted": its target resolved to the phantom .228.
+  Remediation applied in the database: the phantom IP rows were
+  closed, 10.10.20.11/.12 restored, and the credential's host
+  assignment pinned to the pve02 IP row (the UI-created assignment
+  had `ip_address_ids` NULL, which is why it never fired). The
+  durable fix is still owed: forget the two stale offline clients
+  holding the R640 MACs in UniFi, or a future full scan can rebind
+  the hosts again.
+- **Docker Proxy credential.** A credential of type DockerProxy
+  (port 2375 — the read-only WUD socket-proxy sidecars are
+  unauthenticated, so there is no secret) is assigned to the six
+  hosts exposing :2375: NPM (10.10.41.11), Paperless (.16),
+  Scrutiny (.17), Observability (.20), Vault (.26), and Authentik
+  (.28). docker-01 is deliberately excluded — it has no network
+  Docker endpoint. The next discovery over those hosts should
+  enumerate their containers.
+- **SNMPv3 credential (in progress).** An SNMPv3 credential
+  matching the LiveNX SNMP configuration (user `admin`, authPriv,
+  SHA-1 authentication, AES-128 privacy; secrets live only in the
+  credential store) is being created in the UI for the UCG-Fiber,
+  the Nexus (10.10.50.26), and the Catalyst (10.10.10.2).
+  Validation comes from the next discovery run's credential
+  results; the existing v2c `public` credential stays assigned
+  until v3 shows green per host.
+- **LiveWire host repoint.** When LivePCA (VM 303) moved from DHCP
+  10.10.41.129 to static 10.10.41.24, its Scanopy host entry was
+  repointed to .24 and its blank name set to `livepca-01` (Manual);
+  the Proxmox classification (VM 303, Qemu, Running) was untouched.
+
 ## References
 
 - [Scanopy self-hosted install](https://scanopy.net/docs/self-hosted-server/server-installation/)

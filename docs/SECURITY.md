@@ -230,6 +230,22 @@ Run the table once per node. When every row is green, the baseline is done.
   from the matching local account); and the `shell:roles` av-pair
   must not be sent to IOS, which fails authorization on it even when
   the server accepts — exec profiles therefore carry priv-lvl only.
+  LiveNX itself became a TACACS+ client on 2026-11-04: a host block
+  for 10.10.41.27 with its own NAS key (recorded in
+  `tacacs-secrets.txt` as `livenx-nas`), and
+  `service = livenx { Filter-Id = "Admin" }` on the `netadmin` group.
+  LiveNX authorizes its UI users by matching the value of the AV pair
+  named by its Group Key setting (`Filter-Id`; Service Configuration
+  `livenx`, primary server 10.10.41.15 port 49) to a LiveNX group
+  name, so the `netadmin` users land in LiveNX's Admin group; the
+  `livenx` device account deliberately has no UI group mapping.
+  Verified with a raw TACACS+ protocol probe against CT 205
+  (authorization PASS returning `Filter-Id=Admin`). Operational
+  warning: `tac_plus -P`, the config parse check, prints the entire
+  parsed config — every host key and user password — to stdout; run
+  it only with output discarded, judged by exit code alone. (On
+  2026-11-04 its output landed in a chat log; the owner was informed
+  the same turn and elected to keep the existing secrets.)
 - **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
   Docker compose with PostgreSQL 16 + Redis; native OIDC via allauth
   since 2026-11-04), What's Up Docker on docker-01 (VM 301; image-update
@@ -246,7 +262,29 @@ Run the table once per node. When every row is green, the baseline is done.
   `v0.10.0-omnibus` — the `master-omnibus` tag is a stale dev-0.8.2
   build that breaks collector association; collectors on both PVE
   hosts read the physical SSDs via PERC megaraid passthrough on a
-  15-minute systemd timer). NPM proxy hosts for `paperless.homelab`,
-  `scrutiny.homelab`, and `wud.homelab` are still to be added (cert v8,
-  AdGuard rewrites, and Homepage tiles are already in place; Scrutiny gets an
-  Authentik proxy gate, as it has no native auth).
+  15-minute systemd timer). The last three NPM proxy hosts were
+  added on 2026-11-04, completing the front door at 17 hosts:
+  `scrutiny.homelab` (id 15, Authentik forward-auth gated — Scrutiny
+  has no native auth), `wud.homelab` (id 17), and
+  `paperless.homelab` (id 18), the latter two PLAIN hosts with no
+  gate block, because WUD and Paperless do native Authentik OIDC
+  themselves (a gate block on a native-OIDC app returns 500 — the
+  outpost has no binding for it). Rule going forward: the
+  forward-auth gate block goes ONLY on apps with no login of their
+  own (Kuma, Scanopy, SentinelLab, Scrypted, NPM admin, Homepage,
+  Scrutiny); native-OIDC apps (WUD, Paperless, Grafana, PVE, PDM)
+  get plain hosts. Scrutiny's host initially sat offline with no
+  generated config: the Advanced block pasted from iOS carried
+  U+00A0 non-breaking spaces in place of indentation, and nginx
+  rejected the config with an "unknown directive" error naming the
+  space-prefixed directive; it was repaired server-side by copying
+  scanopy's (id 13) proven `advanced_config` into the row and
+  hand-generating `15.conf` from `13.conf`, then reloading nginx —
+  the gate chain verified end-to-end afterwards. Paperless existed
+  twice briefly (the UI-created host 18 plus a shell-created clone,
+  id 19); the clone was removed and 18 is canonical. The first
+  Paperless OIDC sign-in (2026-11-04, as `akadmin`) auto-created a
+  Paperless user `akadmin` with no permissions — the app answered
+  API calls such as `/api/ui_settings/` with 403 until that account
+  was promoted to staff + superuser; the local `bgray` admin remains
+  the break-glass login, and the archive still holds 0 documents.

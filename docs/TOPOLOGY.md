@@ -40,6 +40,17 @@ collectors run on both PVE hosts). AdGuard now holds 20 rewrites
 container on docker-01 (VM 301), watching all seven fleet Docker
 hosts through read-only socket-proxy sidecars.
 
+**Update (2026-11-04, afternoon):** LivePCA (VM 303) moved off DHCP
+to its fleet-pattern static address — 10.10.41.24 (gateway
+10.10.41.1, DNS 10.10.41.10), set in the LiveWire UI; the old DHCP
+address 10.10.41.129 is retired. The follow-through landed the same
+day: the AdGuard rewrite for `livepca.homelab` was repointed to .24
+(config backed up first), the Uptime Kuma LivePCA monitor was
+retargeted, and Scanopy's host entry was repointed (.129 → .24)
+with its previously blank name set to `livepca-01`. The appliance's
+Homelab CA certificate still lists .129 as an IP SAN — cosmetic
+only, since all access is by name.
+
 ![Proxmox homelab logical topology](./proxmox_homelab_logical_topology.svg)
 
 ## VLAN map
