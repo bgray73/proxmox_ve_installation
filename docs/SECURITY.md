@@ -220,12 +220,17 @@ Run the table once per node. When every row is green, the baseline is done.
   switch networks, then AAA config with local fallback, tested in a
   second session before the first closes.
 - **Also deployed 2026-11-03:** Paperless-ngx (CT 206, 10.10.41.16,
-  Docker compose with PostgreSQL 16 + Redis; native-login tier like
-  Vaultwarden), What's Up Docker on docker-01 (VM 301; image-update
+  Docker compose with PostgreSQL 16 + Redis; native OIDC via allauth
+  since 2026-11-04), What's Up Docker on docker-01 (VM 301; image-update
   monitoring for every fleet Docker host via read-only socket-proxy
   sidecars, native ntfy trigger — delivery waits on a VLAN 41 →
   192.168.1.190:2586 UniFi allow; Diun was deployed first and swapped
   out for WUD the same evening at the owner's pick), and Scrutiny
+  Both Paperless and WUD got native Authentik OIDC on 2026-11-04
+  (providers/apps `paperless` and `wud`; a standard OpenID `groups`
+  scope mapping was created — Authentik ships none by default; WUD
+  maps `authentik Admins` to admin; Paperless SSO is exercised over
+  the `paperless.homelab` name path). Scrutiny
   (hub CT 207, 10.10.41.17, image pinned to
   `v0.10.0-omnibus` — the `master-omnibus` tag is a stale dev-0.8.2
   build that breaks collector association; collectors on both PVE
