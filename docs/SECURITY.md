@@ -161,3 +161,46 @@ overwrite it); `jail.local` wins.
 | fail2ban | `fail2ban-client status sshd` | Jail active, 0 banned (so far) |
 
 Run the table once per node. When every row is green, the baseline is done.
+
+## TLS and SSO state (as-built 2026-11-03)
+
+- A local CA ("Homelab CA") lives on the Lenovo (`~/homelab-ca`, root
+  valid to 2036-10-27). Leaf lifetime is ~825 days; the current fleet
+  leaves all expire **2029-02-05**, so they come due together.
+- NPM (CT 201) serves one custom certificate for all its proxy hosts —
+  currently **v5, 17 explicit SANs**. A `*.homelab` wildcard does NOT
+  validate for two-label names, so every served name must be listed
+  explicitly. Swap in place at
+  `/opt/npm/data/custom_ssl/npm-1/fullchain.pem` (same key, new CSR
+  signed by the CA) and reload nginx.
+- **iDRACs** serve CA certificates for `idrac-pve01.homelab` /
+  `idrac-pve02.homelab`, installed via the on-box CSR flow — the only
+  reliable path on iDRAC9 FW 7.x: iDRAC Settings -> Services -> Web
+  Server -> SSL/TLS Certificate Signing Request, Step 2 "Upload Signed
+  Certificate". Externally generated key/certs fail Redfish
+  ReplaceCertificate validation (RAC0160), and `sslcertupload` is not
+  supported over iDRAC SSH. CSR attributes need OU and email or
+  generation fails (RAC1176); the SAN attribute format is plain
+  `name,ip`; the boxes' `CsrEmailAddr` is brett_gray@me.com. AdGuard
+  rewrites point the iDRAC names **directly** at the iDRACs, not via
+  NPM — the out-of-band path stays independent of the VM fleet.
+- **LiveNX and LivePCA** serve in-app CA certificates (DNS + IP SANs)
+  installed through LiveAdmin; `livenx.homelab` / `livepca.homelab`
+  resolve directly to the apps. Both serve their user UI on 443;
+  8443 is the LiveAdmin interface.
+- Client trust is per browser family: Firefox uses its own store;
+  Chromium browsers use the Windows Trusted Root store. Import
+  `homelab-ca.crt` once per machine/browser family.
+- **SSO (Authentik, VM 309).** LiveNX SAML was renamed from the IP to
+  `livenx.homelab` on 2026-11-03 — the SP fields (Entity ID, Host
+  Name, Consumer Login/Logout URLs) and the provider's `acs_url` /
+  `audience` must change together, or logins fail with an
+  ACS-mismatch error. Local `admin` remains break-glass on both apps.
+  LivePCA (LiveWire) SAML was built the same day (provider `livepca`;
+  a `LiveWire_Roles` property mapping emits `Administrator` for
+  akadmin/bgray/Admins; LiveWire's ACL Administrator role lists
+  admin, akadmin, bgray); final login verification is pending.
+  Runbook lesson: a newly created SAML provider must copy
+  `name_id_mapping` (the Username mapping) — the default sends an
+  opaque ID that SPs matching users by name reject (LiveWire
+  answered its ACS with 401 until this was set).

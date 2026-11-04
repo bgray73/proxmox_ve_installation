@@ -130,3 +130,30 @@ pbs01 firmware baselines are still owed at their install time.
 - Supermicro: BMC before BIOS, never simultaneously.
 - Prefer `IDRAC_USER`/`IDRAC_PASS` env vars over `--idrac-user`/`--idrac-pass`
   flags (flags land in shell history).
+
+## As-built state (2026-11-03)
+
+Both R640s are fully current after the 2026-11-03 firmware windows:
+
+| Component | Version |
+|---|---|
+| iDRAC / Lifecycle Controller | 7.00.00.185 |
+| BIOS | 2.29.2 |
+| NIC firmware | 25.0 |
+| PERC H730 Mini | 25.5.9.0001 (final) |
+
+- **Method that works: WebUI upload** of the `.EXE` packages. The
+  2026-10-31 RACADM remote-update attempts failed at LC staging
+  (RED085); do not spend time there again. Packages are staged on the
+  Lenovo at `~/dell-firmware/r640/`.
+- **Boot modes differ per node and must be preserved at POST:**
+  pve01 = UEFI, pve02 = Legacy. Verify after any BIOS update.
+- The Mellanox ConnectX-3 40G NICs are EOL and not Dell-catalog
+  managed; they stay on their current firmware.
+- iDRAC housekeeping settled in the same window: DNS RAC names are
+  `idrac-pve01` / `idrac-pve02`; `System.ServerOS.HostName` is
+  `pve01` / `pve02` (PVE has no iSM, so these never auto-refresh —
+  set them by hand after inventory changes); timezone US/Eastern;
+  NTP 129.6.15.28 + 162.159.200.1.
+- Dell ends 14G iDRAC9 maintenance on **2027-02-01**; 7.00.00.185 is
+  effectively the end of the line.

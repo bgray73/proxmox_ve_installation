@@ -23,6 +23,14 @@ Network 11 requires OS 6, so the verdict is wait), and its firewall
 policies are zone-based. A Lenovo-hosted local CA ("Homelab CA")
 fronts the fleet's web UIs through the NPM reverse proxy on VLAN 41.
 
+**Update (2026-11-03):** after the firmware windows, placement
+settled with no failback — pve02 carries CT 200–203 and VMs 300, 302,
+304, 305, 306, 308, 309; pve01 carries CT 204 and VMs 301, 303, 307.
+The HA set is ct:200, ct:201, vm:302, vm:306, vm:309, each with a
+*/15 replication job (200-0, 201-0, 302-0, 306-0, 309-0). AdGuard
+holds 17 DNS rewrites: 13 names to NPM (10.10.41.11), the iDRAC pair
+direct to 10.10.10.11/.12, and livenx/livepca direct to their apps.
+
 ![Proxmox homelab logical topology](./proxmox_homelab_logical_topology.svg)
 
 ## VLAN map

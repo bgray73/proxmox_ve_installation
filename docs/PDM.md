@@ -67,3 +67,21 @@ install progress tracked in the PDM UI). This overlaps with this
 repo's answer-server work. Do **not** migrate yet — evaluate PDM's
 workflow on the next node rebuild/reinstall and consolidate only if
 it covers the host-aware logic the answer server currently provides.
+
+## HA incident note (2026-11-03)
+
+During the pve01 firmware window, VM 302 wedged: it had HA membership
+but **no replication job**, so when pve01 shut down gracefully, HA
+tried to start it on pve02 with no replica present. Fix: remove from
+HA, move the config back to the owning node, start it there, create
+replication job `302-0` (*/15), then re-add to HA.
+
+Rules from this incident:
+
+- **No HA membership without a replication job.** Check both before
+  any node drain.
+- On a graceful node shutdown, HA services relocate but land in the
+  **stopped** state — start them with
+  `ha-manager set <svc> --state started`. They do not self-start.
+- VMs 302, 306, and 309 fail guest-agent ping, so HA live migration
+  aborts for them; use stop/manual move instead.
