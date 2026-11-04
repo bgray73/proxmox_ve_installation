@@ -1,6 +1,7 @@
 # Database major upgrades — plan
 
-Status: **PLANNED 2026-11-04** (not yet executed). Trigger: What's Up Docker
+Status: **EXECUTED 2026-11-04** — see the as-built record at the bottom of
+this file. Trigger: What's Up Docker
 flagged three major-version database updates on 2026-11-04. This plan exists
 because none of the three is a safe blind `pull` + recreate.
 
@@ -141,3 +142,54 @@ sessions on gated/OIDC apps largely survive; new logins pause.
   pull normally.
 - Close this plan out by moving it to an as-built record (what ran, when,
   any deviations), the same way the TACACS+ work was recorded.
+
+## As-built — executed 2026-11-04
+
+Both runbooks ran back-to-back at Brett's direction ("Do both / Now").
+Final state, verified live:
+
+| Stack | Container | Now running | Verified |
+|---|---|---|---|
+| Paperless (CT 206) | paperless-db | postgres:18 (18.6) | version + data_directory, doc count, users, HTTP 302, webserver healthy |
+| Paperless (CT 206) | paperless-redis | redis:8 | PING/PONG |
+| Authentik (VM 309) | authentik-postgresql-1 | postgres:18-alpine (18.6) | version, healthy, 6 users, OIDC discovery 200, gated-app chain to login page 200 |
+
+Roll-back assets in place before each swap: PVE snapshots `pre-pg18-upgrade`
+on CT 206 and VM 309; pg_dumpall dumps at `/opt/paperless/dump-pre-pg18.sql`
+(293 KB) and `/opt/authentik/dump-pre-pg18.sql` (17.8 MB); compose backups
+`docker-compose.yml.bak-pre-pg18` beside each compose file.
+
+Deviations from the runbooks above (all deliberate, all kept):
+
+1. **The PGDATA gotcha fired exactly as predicted** — the postgres:18
+   entrypoint refused the old mount layout and crash-looped paperless-db
+   before any data existed (guard message names the "unused
+   mount/volume"). Fix, both stacks: a `docker-compose.override.yml`
+   pinning `PGDATA: /var/lib/postgresql/data` on the database service.
+   Paperless's override contains only that; it sits beside the main
+   compose in /opt/paperless.
+2. **Authentik's data move used the override too**: the override also
+   repoints the postgresql service at a new volume
+   `authentik_database_pg18` (declared `external: true`). The old volume
+   `authentik_database` (PG 16 data) is untouched. Paperless kept its
+   bind mount; its PG 16 data is at `/opt/paperless/pgdata.pg16.bak`.
+3. **First Authentik attempt was a clean no-op**: /opt/authentik is
+   root-owned, so the un-sudoed pass failed every file write (backup,
+   dump, sed, override) with Permission denied and simply restarted the
+   untouched PG 16 stack. Re-ran the whole pass under sudo; no state was
+   harmed. Lesson recorded: on VM 309, work in /opt/authentik as root
+   from the start.
+4. **Paperless document count was 0 before and 0 after** — the archive
+   is still empty; nothing was lost in the upgrade (auth_user = 2,
+   carried over).
+5. My synthetic outpost probe (bare curl, Host header only) returns 500
+   from the VM itself post-upgrade; the production path is proven
+   instead: NPM's own auth subrequest got the expected 401 and the full
+   uptime.homelab chain (302 → outpost start → Authentik flow page)
+   returns 200. The bare probe is not a reliable health signal; don't
+   chase it.
+
+Retention: old data dirs/volumes and both dumps are kept until
+**2026-11-11**, then deleted (pgdata.pg16.bak, authentik_database
+volume, both dump files). WUD re-tracks the 18/8 lines from its next
+check; the three major-upgrade flags clear.
